@@ -6,6 +6,16 @@ import { validate } from '../middleware/validate.js';
 
 const router = Router();
 
+function normalizeCoverIcon(icon) {
+  if (!icon || typeof icon !== 'string') return icon;
+  if (/^(https?:)?\/\//i.test(icon)) return icon;
+  if (icon.startsWith('/')) {
+    const base = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+    if (base) return `${base}${icon}`;
+  }
+  return icon;
+}
+
 // ─── GET /usuarios (alias de /perfil con auth opcional) ──────────────────────
 router.get('/', requireAuth, async (req, res) => {
   const { data, error } = await supabase
@@ -64,6 +74,33 @@ router.get('/guardados', requireAuth, async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
   res.json(data.map((g) => g.libro));
+});
+
+// ─── GET /usuarios/publicaciones ─────────────────────────────────────────────
+router.get('/publicaciones', requireAuth, async (req, res) => {
+  const { data: autor, error: autorError } = await supabase
+    .from('autores')
+    .select('id')
+    .eq('usuario_id', req.user.id)
+    .maybeSingle();
+
+  if (autorError) return res.status(500).json({ error: autorError.message });
+  if (!autor?.id) return res.json([]);
+
+  const { data, error } = await supabase
+    .from('libros_completos')
+    .select('*')
+    .eq('autor_id', autor.id)
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  const normalized = (data || []).map((libro) => ({
+    ...libro,
+    portada_icono: normalizeCoverIcon(libro.portada_icono),
+  }));
+
+  res.json(normalized);
 });
 
 // ─── GET /usuarios/descargas ──────────────────────────────────────────────────

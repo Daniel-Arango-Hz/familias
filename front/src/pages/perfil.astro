@@ -22,22 +22,16 @@ import Layout from '../layouts/Layout.astro';
           <button class="btn-edit" id="edit-profile-btn">✏️ Editar Perfil</button>
         </div>
 
-        <div class="profile-card stats-card">
-          <h3>📊 Mis Estadísticas</h3>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <div class="stat-number" id="total-downloads">0</div>
-              <p class="stat-label">Descargas</p>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number" id="total-saved">0</div>
-              <p class="stat-label">Guardados</p>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number" id="total-ratings">0</div>
-              <p class="stat-label">Valoraciones</p>
-            </div>
-          </div>
+        <div class="profile-card library-card">
+          <h3>📚 Mis Libros</h3>
+          <p class="library-desc">Aquí verás los libros que has publicado en la comunidad.</p>
+          <a href="/panel/publicaciones" class="library-link">Ver mis libros publicados</a>
+        </div>
+
+        <div class="profile-card library-card">
+          <h3>🗂️ Mi Biblioteca</h3>
+          <p class="library-desc">Accede a los libros que has guardado para leer después.</p>
+          <a href="/panel/guardados" class="library-link">Ver libros guardados</a>
         </div>
 
         <div class="profile-card">
@@ -161,33 +155,35 @@ import Layout from '../layouts/Layout.astro';
     box-shadow: var(--shadow-lg);
   }
 
-  .stats-card {
-    grid-column: auto;
+  .library-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
   }
 
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    margin-top: 1rem;
-  }
-
-  .stat-item {
-    text-align: center;
-  }
-
-  .stat-number {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--color-primary-blue);
-    margin-bottom: 0.5rem;
-  }
-
-  .stat-label {
-    font-size: 0.9rem;
+  .library-desc {
+    font-size: 0.95rem;
     color: var(--color-text-muted);
-    font-weight: 500;
+    line-height: 1.5;
     margin: 0;
+  }
+
+  .library-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--color-primary-blue), var(--color-primary-purple));
+    color: var(--color-white);
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .library-link:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
   }
 
   .profile-card h3 {
@@ -264,10 +260,6 @@ import Layout from '../layouts/Layout.astro';
     .profile-grid {
       grid-template-columns: 1fr;
       gap: 1.5rem;
-    }
-
-    .stats-grid {
-      grid-template-columns: 1fr;
     }
 
     .card-header {
