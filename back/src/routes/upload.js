@@ -5,8 +5,11 @@ import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
-const JSZip = require('jszip');
+
+// Lazy load para evitar crashes al inicializar la función serverless
+let _pdfParse, _JSZip;
+function getPdfParse() { return (_pdfParse ??= require('pdf-parse')); }
+function getJSZip()    { return (_JSZip    ??= require('jszip')); }
 
 const STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET || 'libros';
 const ALLOWED_MIME_TYPES = new Set([
@@ -67,7 +70,7 @@ function extractBase64Payload(raw) {
 
 async function getPdfPageCount(fileBuffer) {
   try {
-    const result = await pdfParse(fileBuffer);
+    const result = await getPdfParse()(fileBuffer);
     const count = Number(result?.numpages);
     if (Number.isInteger(count) && count > 0) return count;
   } catch (error) {
@@ -97,7 +100,7 @@ function estimatePagesFromTextLength(text = '') {
 
 async function getDocxEstimatedPageCount(fileBuffer) {
   try {
-    const zip = await JSZip.loadAsync(fileBuffer);
+    const zip = await getJSZip().loadAsync(fileBuffer);
     const documentXmlEntry = zip.file('word/document.xml');
     if (!documentXmlEntry) return 1;
 
