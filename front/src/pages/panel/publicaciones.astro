@@ -24,13 +24,27 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
       <div class="container panel-layout">
         <nav class="panel-nav" aria-label="Navegación del panel">
           <ul class="panel-nav-list">
-            <li><a href="/panel" class="panel-nav-link">Mis Libros</a></li>
-            <li><a href="/panel/guardados" class="panel-nav-link">Mi Biblioteca</a></li>
+            <li><a href="/panel/guardados" class="panel-nav-link">Guardados</a></li>
             <li><a href="/panel/publicaciones" class="panel-nav-link active">Publicaciones</a></li>
           </ul>
         </nav>
 
         <div class="panel-content">
+          <div class="stats-row" id="published-stats" style="display: none;">
+            <div class="stat-card">
+              <strong id="stat-publicaciones">0</strong>
+              <span>Publicaciones</span>
+            </div>
+            <div class="stat-card">
+              <strong id="stat-descargas">0</strong>
+              <span>Descargas</span>
+            </div>
+            <div class="stat-card">
+              <strong id="stat-guardados">0</strong>
+              <span>Guardados</span>
+            </div>
+          </div>
+
           <div class="section-header section-header-row">
             <div class="section-header">
               <h2>Libros Publicados</h2>
@@ -69,8 +83,21 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
     const grid = document.getElementById('published-grid');
     const empty = document.getElementById('published-empty');
     const count = document.getElementById('published-count');
+    const stats = document.getElementById('published-stats');
+    const statPublicaciones = document.getElementById('stat-publicaciones');
+    const statDescargas = document.getElementById('stat-descargas');
+    const statGuardados = document.getElementById('stat-guardados');
 
-    if (!grid || !empty || !count) return;
+    if (!grid || !empty || !count || !stats || !statPublicaciones || !statDescargas || !statGuardados) return;
+
+    const totalPublicaciones = libros.length;
+    const totalDescargas = libros.reduce((acc, libro) => acc + Number(libro.descargas_total || 0), 0);
+    const totalGuardados = libros.reduce((acc, libro) => acc + Number(libro.guardados_total || 0), 0);
+
+    statPublicaciones.textContent = totalPublicaciones.toLocaleString('es');
+    statDescargas.textContent = totalDescargas.toLocaleString('es');
+    statGuardados.textContent = totalGuardados.toLocaleString('es');
+    stats.style.display = 'grid';
 
     count.textContent = `${libros.length} ${libros.length === 1 ? 'publicación' : 'publicaciones'}`;
 
@@ -99,7 +126,7 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
               <div class="book-info">
                 <h3>${escapeHtml(libro.titulo || 'Sin título')}</h3>
                 <p>${escapeHtml(libro.autor_nombre || 'Autor')}</p>
-                <small>${estado} · ⭐ ${Number(libro.rating_promedio || 0).toFixed(1)} · ⬇ ${Number(libro.descargas_total || 0).toLocaleString('es')}</small>
+                <small>${estado} · ⭐ ${Number(libro.rating_promedio || 0).toFixed(1)} · ⬇ ${Number(libro.descargas_total || 0).toLocaleString('es')} · ❤️ ${Number(libro.guardados_total || 0).toLocaleString('es')}</small>
               </div>
             </a>
           </article>
@@ -219,6 +246,37 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
     gap: 1.25rem;
   }
 
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .stat-card {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .stat-card strong {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    line-height: 1.1;
+  }
+
+  .stat-card span {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+  }
+
   .panel-books-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -312,9 +370,17 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
     .panel-books-grid {
       grid-template-columns: repeat(2, 1fr);
     }
+
+    .stats-row {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 
   @media (max-width: 520px) {
+    .stats-row {
+      grid-template-columns: 1fr;
+    }
+
     .panel-books-grid {
       grid-template-columns: 1fr;
     }

@@ -89,14 +89,25 @@ router.get('/guardados', requireAuth, async (req, res) => {
 
   const autorIds = [...new Set((libros || []).map((l) => l.autor_id).filter(Boolean))];
 
-  const { data: autoresData, error: autoresError } = autorIds.length
+  const { data: autoresBase, error: autoresBaseError } = autorIds.length
     ? await supabaseAdmin
         .from('autores')
-        .select('id, usuario:usuarios(nombre, apellido)')
+        .select('id, usuario_id')
         .in('id', autorIds)
     : { data: [], error: null };
 
-  if (autoresError) return res.status(500).json({ error: autoresError.message });
+  if (autoresBaseError) return res.status(500).json({ error: autoresBaseError.message });
+
+  const usuarioIds = [...new Set((autoresBase || []).map((a) => a.usuario_id).filter(Boolean))];
+
+  const { data: usuariosBase, error: usuariosBaseError } = usuarioIds.length
+    ? await supabaseAdmin
+        .from('usuarios')
+        .select('id, nombre, apellido')
+        .in('id', usuarioIds)
+    : { data: [], error: null };
+
+  if (usuariosBaseError) return res.status(500).json({ error: usuariosBaseError.message });
 
   const { data: valoraciones, error: valoracionesError } = await supabaseAdmin
     .from('valoraciones')
@@ -105,11 +116,13 @@ router.get('/guardados', requireAuth, async (req, res) => {
 
   if (valoracionesError) return res.status(500).json({ error: valoracionesError.message });
 
+  const usuariosById = new Map((usuariosBase || []).map((u) => [u.id, u]));
   const autoresById = new Map(
-    (autoresData || []).map((a) => [
-      a.id,
-      `${a.usuario?.nombre || ''} ${a.usuario?.apellido || ''}`.trim() || 'Anónimo',
-    ])
+    (autoresBase || []).map((a) => {
+      const user = usuariosById.get(a.usuario_id);
+      const nombre = `${user?.nombre || ''} ${user?.apellido || ''}`.trim() || 'Anónimo';
+      return [a.id, nombre];
+    })
   );
 
   const ratingsByLibroId = new Map();
@@ -170,13 +183,31 @@ router.get('/publicaciones', requireAuth, async (req, res) => {
     .from('libros_completos')
     .select('*')
     .eq('autor_id', autor.id)
+    .eq('publicado', true)
     .order('created_at', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });
 
+  const libroIds = (data || []).map((l) => l.id).filter(Boolean);
+
+  const { data: guardadosRows, error: guardadosRowsError } = libroIds.length
+    ? await supabaseAdmin
+        .from('guardados')
+        .select('libro_id')
+        .in('libro_id', libroIds)
+    : { data: [], error: null };
+
+  if (guardadosRowsError) return res.status(500).json({ error: guardadosRowsError.message });
+
+  const guardadosCountByLibroId = new Map();
+  for (const row of guardadosRows || []) {
+    guardadosCountByLibroId.set(row.libro_id, (guardadosCountByLibroId.get(row.libro_id) || 0) + 1);
+  }
+
   const normalized = (data || []).map((libro) => ({
     ...libro,
     portada_icono: normalizeCoverIcon(libro.portada_icono),
+    guardados_total: guardadosCountByLibroId.get(libro.id) || 0,
   }));
 
   res.json(normalized);

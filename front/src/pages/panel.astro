@@ -54,10 +54,8 @@ const usuario = {
         <nav class="panel-nav" aria-label="Navegación del panel">
           <ul class="panel-nav-list">
             {[
-              { label: "Mis Libros", href: "/panel", activo: true, icon: '<rect x="3" y="4" width="13" height="16" rx="2"/><path d="M7 8h5M7 12h5M7 16h3" stroke-linecap="round"/>' },
               { label: "Guardados", href: "/panel/guardados", activo: false, icon: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>' },
-              { label: "Publicaciones", href: "/panel/publicaciones", activo: false, icon: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>' },
-              { label: "Configuración", href: "/panel/configuracion", activo: false, icon: '<circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>' },
+              { label: "Publicaciones", href: "/panel/publicaciones", activo: true, icon: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>' },
             ].map((item) => (
               <li>
                 <a href={item.href} class={`panel-nav-link ${item.activo ? 'active' : ''}`}>
