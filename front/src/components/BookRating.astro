@@ -6,6 +6,7 @@ interface Props {
 }
 
 const { libroSlug, currentRating, totalVotes } = Astro.props;
+const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 ---
 
 <div class="book-rating-container">
@@ -125,7 +126,7 @@ const { libroSlug, currentRating, totalVotes } = Astro.props;
   }
 </style>
 
-<script define:vars={{ libroSlug }}>
+<script define:vars={{ libroSlug, apiUrl }}>
   document.addEventListener('DOMContentLoaded', () => {
     const starsContainer = document.getElementById('stars-interactive');
     const ratingHint = document.getElementById('rating-hint');
@@ -190,7 +191,7 @@ const { libroSlug, currentRating, totalVotes } = Astro.props;
         ratingHint.textContent = '⏳ Guardando valoración...';
         ratingHint.style.color = '#b82db5';
 
-        const response = await fetch(`http://localhost:3000/api/libros/${libroSlug}/valorar`, {
+        const response = await fetch(`${apiUrl}/libros/${libroSlug}/valorar`, {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify({ 
