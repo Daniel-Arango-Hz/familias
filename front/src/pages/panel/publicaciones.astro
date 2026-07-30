@@ -69,6 +69,7 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 <script define:vars={{ apiUrl }}>
   // @ts-nocheck
   const API_URL = apiUrl;
+  let isDeleting = false;
 
   function escapeHtml(value) {
     return String(value ?? '')
@@ -112,27 +113,107 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
     grid.innerHTML = libros
       .map((libro) => {
         const portada = /^https?:\/\//i.test(libro.portada_icono || '')
-          ? `<img class="book-cover-image" src="${escapeHtml(libro.portada_icono)}" alt="Portada de ${escapeHtml(libro.titulo)}" loading="lazy" />`
-          : `<span class="book-icon">${escapeHtml(libro.portada_icono || '📖')}</span>`;
+          ? `<img class="cover-image" src="${escapeHtml(libro.portada_icono)}" alt="Portada de ${escapeHtml(libro.titulo)}" loading="lazy" />`
+          : `<span class="cover-icon">${escapeHtml(libro.portada_icono || '📖')}</span>`;
 
         const estado = libro.publicado ? 'Publicado' : 'Borrador';
 
         return `
           <article class="book-card">
-            <a href="/libro/${encodeURIComponent(libro.slug)}" class="book-link">
+            <button class="delete-book-btn js-delete-book" data-slug="${encodeURIComponent(libro.slug || '')}" data-title="${escapeHtml(libro.titulo || 'este libro')}" type="button" aria-label="Eliminar ${escapeHtml(libro.titulo || 'libro')}">
+              🗑
+            </button>
+            <a href="/libro/${encodeURIComponent(libro.slug)}" class="book-card-link">
               <div class="book-cover" style="background: ${escapeHtml(libro.portada_gradiente || 'linear-gradient(135deg,#00a8e8,#b82db5)')}">
                 ${portada}
+                <div class="cover-title-overlay">
+                  <p class="cover-titulo">${escapeHtml(libro.titulo || 'Sin título')}</p>
+                  <p class="cover-autor">${escapeHtml(libro.autor_nombre || 'Autor')}</p>
+                </div>
               </div>
               <div class="book-info">
-                <h3>${escapeHtml(libro.titulo || 'Sin título')}</h3>
-                <p>${escapeHtml(libro.autor_nombre || 'Autor')}</p>
-                <small>${estado} · ⭐ ${Number(libro.rating_promedio || 0).toFixed(1)} · ⬇ ${Number(libro.descargas_total || 0).toLocaleString('es')} · ❤️ ${Number(libro.guardados_total || 0).toLocaleString('es')}</small>
+                <p class="book-autor">${escapeHtml(libro.autor_nombre || 'Autor')}</p>
+                <h3 class="book-titulo">${escapeHtml(libro.titulo || 'Sin título')}</h3>
+                <div class="book-tags">
+                  <span class="badge">${estado}</span>
+                </div>
+                <div class="book-meta">
+                  <div class="star-rating">⭐ ${Number(libro.rating_promedio || 0).toFixed(1)}</div>
+                  <div class="book-descargas">⬇ ${Number(libro.descargas_total || 0).toLocaleString('es')}</div>
+                  <div class="book-guardados">❤️ ${Number(libro.guardados_total || 0).toLocaleString('es')}</div>
+                </div>
               </div>
             </a>
           </article>
         `;
       })
       .join('');
+  }
+
+  async function deletePublishedBook(slug, titulo) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/auth/login';
+      return;
+    }
+
+    if (isDeleting) return;
+
+    const confirmed = window.confirm(`¿Eliminar "${titulo}"? Esta acción quitará el libro y sus datos asociados.`);
+    if (!confirmed) return;
+
+    isDeleting = true;
+
+    try {
+      const res = await fetch(`${API_URL}/libros/${slug}/publicacion`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status === 401) {
+        window.location.href = '/auth/login';
+        return;
+      }
+
+      if (res.status === 403) {
+        window.alert('No tienes permisos para eliminar este libro.');
+        return;
+      }
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'No se pudo eliminar la publicación.');
+      }
+
+      await loadPublishedBooks();
+    } catch (error) {
+      window.alert(error?.message || 'Error al eliminar la publicación.');
+    } finally {
+      isDeleting = false;
+    }
+  }
+
+  function bindPublishedActions() {
+    const grid = document.getElementById('published-grid');
+    if (!grid || grid.dataset.bound === '1') return;
+
+    grid.addEventListener('click', async (event) => {
+      const button = event.target.closest('.js-delete-book');
+      if (!button) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const slug = button.getAttribute('data-slug') || '';
+      const title = button.getAttribute('data-title') || 'este libro';
+      if (!slug) return;
+
+      await deletePublishedBook(slug, title);
+    });
+
+    grid.dataset.bound = '1';
   }
 
   async function loadPublishedBooks() {
@@ -158,10 +239,12 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 
       const data = await res.json();
       renderPublishedBooks(Array.isArray(data) ? data : []);
+      bindPublishedActions();
     } catch (error) {
       const count = document.getElementById('published-count');
       if (count) count.textContent = 'Error al cargar publicaciones';
       renderPublishedBooks([]);
+      bindPublishedActions();
     }
   }
 
@@ -285,16 +368,43 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 
   .book-card {
     background: var(--color-white);
-    border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
     overflow: hidden;
+    transition: all 0.3s;
+    border: 3px solid var(--color-primary-blue);
+    position: relative;
   }
 
-  .book-link {
-    display: block;
+  .book-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 168, 232, 0), rgba(0, 168, 232, 0.15));
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .book-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-8px) scale(1.02);
+    border-color: var(--color-primary-pink);
+  }
+
+  .book-card:hover::before {
+    opacity: 1;
+  }
+
+  .book-card-link {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
   }
 
   .book-cover {
+    position: relative;
     aspect-ratio: 3/4;
     display: flex;
     align-items: center;
@@ -302,36 +412,108 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
     overflow: hidden;
   }
 
-  .book-cover-image {
+  .cover-image {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
-  .book-icon {
-    font-size: 3rem;
-    opacity: 0.45;
+  .cover-icon {
+    font-size: 4.5rem;
+    opacity: 0.4;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+  }
+
+  .cover-title-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1.5rem 1rem 1rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+  }
+
+  .cover-titulo {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+  }
+
+  .cover-autor {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 0.25rem;
+    font-weight: 500;
   }
 
   .book-info {
-    padding: 0.9rem;
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
   }
 
-  .book-info h3 {
-    font-size: 1rem;
-    color: var(--color-text);
-    margin: 0 0 0.3rem;
-  }
-
-  .book-info p {
+  .book-autor {
     font-size: 0.85rem;
     color: var(--color-primary-blue);
-    margin: 0 0 0.2rem;
+    font-weight: 600;
+    margin: 0;
   }
 
-  .book-info small {
+  .book-titulo {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.35;
+    margin: 0;
+  }
+
+  .book-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .badge {
+    background: var(--color-cream-dark);
+    color: var(--color-navy);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.22rem 0.5rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .book-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    font-size: 0.85rem;
     color: var(--color-text-muted);
-    font-size: 0.78rem;
+    margin-top: 0.2rem;
+  }
+
+  .star-rating {
+    color: var(--color-primary-yellow);
+    font-weight: 600;
+  }
+
+  .book-descargas {
+    color: var(--color-primary-blue);
+    font-weight: 600;
+  }
+
+  .book-guardados {
+    color: #d44f75;
+    font-weight: 600;
   }
 
   .empty-state {
@@ -383,6 +565,216 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 
     .panel-books-grid {
       grid-template-columns: 1fr;
+    }
+
+    .book-card {
+      border-width: 2px;
+    }
+
+    .cover-icon {
+      font-size: 3rem;
+    }
+
+    .book-meta {
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+  }
+</style>
+
+<style is:global>
+  #published-grid .book-card {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: all 0.3s;
+    border: 3px solid var(--color-primary-blue);
+    position: relative;
+  }
+
+  #published-grid .delete-book-btn {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.7rem;
+    z-index: 3;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 999px;
+    background: rgba(180, 35, 35, 0.85);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  #published-grid .delete-book-btn:hover {
+    background: rgba(154, 22, 22, 0.95);
+    transform: scale(1.06);
+  }
+
+  #published-grid .delete-book-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  #published-grid .book-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 168, 232, 0), rgba(0, 168, 232, 0.15));
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  #published-grid .book-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-8px) scale(1.02);
+    border-color: var(--color-primary-pink);
+  }
+
+  #published-grid .book-card:hover::before {
+    opacity: 1;
+  }
+
+  #published-grid .book-card-link {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+  }
+
+  #published-grid .book-cover {
+    position: relative;
+    aspect-ratio: 3/4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #published-grid .cover-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  #published-grid .cover-icon {
+    font-size: 4.5rem;
+    opacity: 0.4;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+  }
+
+  #published-grid .cover-title-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1.5rem 1rem 1rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+  }
+
+  #published-grid .cover-titulo {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  #published-grid .cover-autor {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 0.25rem;
+    font-weight: 500;
+  }
+
+  #published-grid .book-info {
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  #published-grid .book-autor {
+    font-size: 0.85rem;
+    color: var(--color-primary-blue);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  #published-grid .book-titulo {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.35;
+    margin: 0;
+  }
+
+  #published-grid .book-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  #published-grid .badge {
+    background: var(--color-cream-dark);
+    color: var(--color-navy);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.22rem 0.5rem;
+    border-radius: var(--radius-lg);
+  }
+
+  #published-grid .book-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-top: 0.2rem;
+  }
+
+  #published-grid .star-rating {
+    color: var(--color-primary-yellow);
+    font-weight: 600;
+  }
+
+  #published-grid .book-descargas {
+    color: var(--color-primary-blue);
+    font-weight: 600;
+  }
+
+  #published-grid .book-guardados {
+    color: #d44f75;
+    font-weight: 600;
+  }
+
+  @media (max-width: 520px) {
+    #published-grid .book-card {
+      border-width: 2px;
+    }
+
+    #published-grid .cover-icon {
+      font-size: 3rem;
+    }
+
+    #published-grid .book-meta {
+      gap: 0.5rem;
+      font-size: 0.8rem;
     }
   }
 </style>

@@ -337,6 +337,61 @@ router.post('/:slug/guardar', requireAuth, async (req, res) => {
   }
 });
 
+// ─── DELETE /libros/:slug/publicacion (autor propietario) ───────────────────
+router.delete('/:slug/publicacion', requireAuth, async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const { data: autor, error: autorError } = await supabaseAdmin
+      .from('autores')
+      .select('id')
+      .eq('usuario_id', req.user.id)
+      .maybeSingle();
+
+    if (autorError) {
+      return res.status(500).json({ error: autorError.message });
+    }
+
+    if (!autor?.id) {
+      return res.status(403).json({ error: 'Solo un autor puede eliminar sus publicaciones.' });
+    }
+
+    const { data: libro, error: libroError } = await supabaseAdmin
+      .from('libros')
+      .select('id, autor_id, titulo')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (libroError) {
+      return res.status(500).json({ error: libroError.message });
+    }
+
+    if (!libro?.id) {
+      return res.status(404).json({ error: 'Libro no encontrado' });
+    }
+
+    if (libro.autor_id !== autor.id) {
+      return res.status(403).json({ error: 'No puedes eliminar libros de otro autor.' });
+    }
+
+    const { error: deleteError } = await supabaseAdmin
+      .from('libros')
+      .delete()
+      .eq('id', libro.id);
+
+    if (deleteError) {
+      return res.status(500).json({ error: deleteError.message });
+    }
+
+    // En schema.sql, las tablas relacionadas (guardados, descargas, valoraciones,
+    // paginas_libro, libros_categorias) se eliminan automáticamente por ON DELETE CASCADE.
+    return res.json({ eliminado: true, libro_id: libro.id, titulo: libro.titulo });
+  } catch (error) {
+    console.error('Error eliminando publicación:', error);
+    return res.status(500).json({ error: 'Error interno al eliminar la publicación.' });
+  }
+});
+
 // ─── POST /libros (admin) ─────────────────────────────────────────────────────
 router.post(
   '/',
