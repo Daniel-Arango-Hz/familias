@@ -59,6 +59,17 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
             <p>Aún no has publicado libros.</p>
             <a href="/subir-libro" class="btn-link">Subir primer libro</a>
           </div>
+
+          <div id="deleteConfirmOverlay" class="delete-modal-overlay" aria-hidden="true">
+            <div class="delete-modal" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle" aria-describedby="deleteConfirmMessage">
+              <h3 id="deleteConfirmTitle">Confirmar eliminación</h3>
+              <p id="deleteConfirmMessage">¿Seguro que quieres eliminar esta publicación?</p>
+              <div class="delete-modal-actions">
+                <button type="button" class="delete-cancel-btn" id="deleteCancelBtn">Cancelar</button>
+                <button type="button" class="delete-confirm-btn" id="deleteConfirmBtn">Eliminar</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -70,6 +81,56 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
   // @ts-nocheck
   const API_URL = apiUrl;
   let isDeleting = false;
+
+  function showDeleteConfirmModal(titulo) {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById('deleteConfirmOverlay');
+      const message = document.getElementById('deleteConfirmMessage');
+      const btnConfirm = document.getElementById('deleteConfirmBtn');
+      const btnCancel = document.getElementById('deleteCancelBtn');
+
+      if (!overlay || !message || !btnConfirm || !btnCancel) {
+        resolve(false);
+        return;
+      }
+
+      let resolved = false;
+
+      const cleanup = () => {
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+        btnConfirm.removeEventListener('click', onConfirm);
+        btnCancel.removeEventListener('click', onCancel);
+        overlay.removeEventListener('click', onOverlayClick);
+        document.removeEventListener('keydown', onKeyDown);
+      };
+
+      const finalize = (value) => {
+        if (resolved) return;
+        resolved = true;
+        cleanup();
+        resolve(value);
+      };
+
+      const onConfirm = () => finalize(true);
+      const onCancel = () => finalize(false);
+      const onOverlayClick = (event) => {
+        if (event.target === overlay) finalize(false);
+      };
+      const onKeyDown = (event) => {
+        if (event.key === 'Escape') finalize(false);
+      };
+
+      message.textContent = `¿Eliminar "${titulo}"? Esta acción quitará el libro y sus datos asociados.`;
+      overlay.classList.add('active');
+      overlay.setAttribute('aria-hidden', 'false');
+
+      btnConfirm.addEventListener('click', onConfirm);
+      btnCancel.addEventListener('click', onCancel);
+      overlay.addEventListener('click', onOverlayClick);
+      document.addEventListener('keydown', onKeyDown);
+    });
+  }
 
   function escapeHtml(value) {
     return String(value ?? '')
@@ -120,7 +181,7 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 
         return `
           <article class="book-card">
-            <button class="delete-book-btn js-delete-book" data-slug="${encodeURIComponent(libro.slug || '')}" data-title="${escapeHtml(libro.titulo || 'este libro')}" type="button" aria-label="Eliminar ${escapeHtml(libro.titulo || 'libro')}">
+            <button class="delete-book-btn js-delete-book" data-slug="${encodeURIComponent(libro.slug || '')}" data-title="${encodeURIComponent(String(libro.titulo || 'este libro'))}" type="button" aria-label="Eliminar ${escapeHtml(libro.titulo || 'libro')}">
               🗑
             </button>
             <a href="/libro/${encodeURIComponent(libro.slug)}" class="book-card-link">
@@ -159,7 +220,7 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 
     if (isDeleting) return;
 
-    const confirmed = window.confirm(`¿Eliminar "${titulo}"? Esta acción quitará el libro y sus datos asociados.`);
+    const confirmed = await showDeleteConfirmModal(titulo);
     if (!confirmed) return;
 
     isDeleting = true;
@@ -207,7 +268,8 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
       event.stopPropagation();
 
       const slug = button.getAttribute('data-slug') || '';
-      const title = button.getAttribute('data-title') || 'este libro';
+      const rawTitle = button.getAttribute('data-title') || '';
+      const title = rawTitle ? decodeURIComponent(rawTitle) : 'este libro';
       if (!slug) return;
 
       await deletePublishedBook(slug, title);
@@ -533,6 +595,82 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
     background: var(--color-primary-blue);
     color: var(--color-white);
     font-size: 0.88rem;
+  }
+
+  .delete-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .delete-modal-overlay.active {
+    display: flex;
+  }
+
+  .delete-modal {
+    width: min(460px, 100%);
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 1rem;
+  }
+
+  .delete-modal h3 {
+    margin: 0 0 0.4rem;
+    font-family: var(--font-serif);
+    color: var(--color-navy);
+    font-size: 1.2rem;
+  }
+
+  .delete-modal p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .delete-modal-actions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+  }
+
+  .delete-cancel-btn,
+  .delete-confirm-btn {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.8rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .delete-cancel-btn {
+    background: var(--color-white);
+    color: var(--color-text-muted);
+  }
+
+  .delete-cancel-btn:hover {
+    background: var(--color-cream);
+  }
+
+  .delete-confirm-btn {
+    background: #b42323;
+    border-color: #b42323;
+    color: #fff;
+  }
+
+  .delete-confirm-btn:hover {
+    background: #8f1a1a;
+    border-color: #8f1a1a;
   }
 
   @media (max-width: 900px) {
