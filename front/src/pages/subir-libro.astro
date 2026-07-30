@@ -4,14 +4,14 @@ import Header from '../components/Header.astro';
 
 ---
 
-<Layout title="Subir Libro – FamiliaLee" description="Sube tu libro en PDF o Word.">
+<Layout title="Subir Libro – FamiliaLee" description="Sube tu libro en PDF o DOCX.">
   <Header />
   
   <main class="upload-container">
     <section class="upload-hero">
       <div class="container">
         <h1 class="upload-titulo">📤 Sube tu Libro</h1>
-        <p class="upload-subtitle">Carga un PDF o archivo Word y lo convertiremos automáticamente en un libro interactivo</p>
+        <p class="upload-subtitle">Carga un PDF o DOCX. Los archivos Word se convierten automáticamente a PDF antes de publicar.</p>
       </div>
     </section>
 
@@ -40,7 +40,7 @@ import Header from '../components/Header.astro';
               </svg>
               <h2>Arrastra tu archivo aquí</h2>
               <p>o haz clic para seleccionar</p>
-              <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt" style="display: none;" />
+              <input type="file" id="fileInput" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display: none;" />
             </div>
           </aside>
 
@@ -126,6 +126,7 @@ import Header from '../components/Header.astro';
   </main>
 
   <script>
+    // @ts-nocheck
     const API_URL = (import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api');
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -141,6 +142,7 @@ import Header from '../components/Header.astro';
 
     let selectedFile = null;
     let selectedCover = null;
+    let convertedUploadFile = null;
 
     function showAuthRequiredModal() {
       const modal = document.getElementById('loginModalOverlay');
@@ -192,20 +194,286 @@ import Header from '../components/Header.astro';
       }
     });
 
-    function handleFileSelect(file) {
-      const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
-      
-      if (!validTypes.includes(file.type)) {
-        showError('⚠️ Por favor sube un archivo PDF o Word.');
+    function getReadableSize(file) {
+      return `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+    }
+
+    function isPdfFile(file) {
+      if (!file) return false;
+      return file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+    }
+
+    function isDocxFile(file) {
+      if (!file) return false;
+      return (
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        /\.docx$/i.test(file.name || '')
+      );
+    }
+
+    function isDocFile(file) {
+      if (!file) return false;
+      return file.type === 'application/msword' || /\.doc$/i.test(file.name || '');
+    }
+
+    function updateFileInfo(file, originalName = null) {
+      const title = originalName
+        ? `${file.name} (convertido desde ${originalName})`
+        : file.name;
+
+      document.getElementById('fileName').textContent = title;
+      document.getElementById('fileSize').textContent = getReadableSize(file);
+      fileInfo.style.display = 'block';
+      uploadBtn.disabled = false;
+    }
+
+    async function convertDocxToPdf(file) {
+      const mammoth = await import('https://esm.sh/mammoth@1.9.0?bundle');
+      const { jsPDF } = await import('https://esm.sh/jspdf@2.5.1');
+      const html2canvas = (await import('https://esm.sh/html2canvas@1.4.1')).default;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.convertToHtml(
+        { arrayBuffer },
+        {
+          convertImage: mammoth.images.imgElement((image) => {
+            return image.read('base64').then((base64) => ({
+              src: `data:${image.contentType};base64,${base64}`,
+            }));
+          }),
+        }
+      );
+      const html = String(result?.value || '').trim();
+
+      if (!html) {
+        throw new Error('No se pudo leer el contenido del archivo DOCX.');
+      }
+
+      const renderHost = document.createElement('div');
+      renderHost.style.position = 'fixed';
+      renderHost.style.left = '-3000px';
+      renderHost.style.top = '0';
+      renderHost.style.pointerEvents = 'none';
+      renderHost.style.zIndex = '0';
+      renderHost.style.width = '794px';
+      renderHost.style.padding = '24px';
+      renderHost.style.background = '#ffffff';
+      renderHost.style.color = '#111111';
+      renderHost.style.fontFamily = 'Georgia, serif';
+      renderHost.style.fontSize = '14px';
+      renderHost.style.lineHeight = '1.6';
+      renderHost.innerHTML = html;
+
+      // Evita desbordes y preserva imágenes dentro de página.
+      renderHost.querySelectorAll('img').forEach((img) => {
+        img.style.maxWidth = '100%';
+        img.style.height = 'auto';
+        img.style.display = 'block';
+        img.style.margin = '0.6rem auto';
+      });
+
+      document.body.appendChild(renderHost);
+
+      const waitImageLoaded = (img) =>
+        new Promise((resolve) => {
+          if (img.complete) {
+            resolve();
+            return;
+          }
+          img.addEventListener('load', () => resolve(), { once: true });
+          img.addEventListener('error', () => resolve(), { once: true });
+        });
+
+      const images = Array.from(renderHost.querySelectorAll('img'));
+      await Promise.all(images.map((img) => waitImageLoaded(img)));
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      const renderedCanvas = await html2canvas(renderHost, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      renderHost.remove();
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4',
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      const contentWidth = pageWidth - margin * 2;
+      const contentHeight = pageHeight - margin * 2;
+
+      const pxPerPt = renderedCanvas.width / contentWidth;
+      const sliceHeightPx = Math.floor(contentHeight * pxPerPt);
+
+      let offsetY = 0;
+      let firstPage = true;
+
+      while (offsetY < renderedCanvas.height) {
+        const currentSliceHeight = Math.min(sliceHeightPx, renderedCanvas.height - offsetY);
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = renderedCanvas.width;
+        pageCanvas.height = currentSliceHeight;
+
+        const pageCtx = pageCanvas.getContext('2d');
+        if (!pageCtx) {
+          throw new Error('No se pudo preparar el render de la página PDF.');
+        }
+
+        pageCtx.fillStyle = '#ffffff';
+        pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        pageCtx.drawImage(
+          renderedCanvas,
+          0,
+          offsetY,
+          renderedCanvas.width,
+          currentSliceHeight,
+          0,
+          0,
+          renderedCanvas.width,
+          currentSliceHeight
+        );
+
+        const pageDataUrl = pageCanvas.toDataURL('image/jpeg', 0.98);
+        const renderHeightPt = currentSliceHeight / pxPerPt;
+
+        if (!firstPage) {
+          pdf.addPage();
+        }
+
+        pdf.addImage(pageDataUrl, 'JPEG', margin, margin, contentWidth, renderHeightPt, undefined, 'FAST');
+
+        firstPage = false;
+        offsetY += currentSliceHeight;
+      }
+
+      const pdfBlob = pdf.output('blob');
+      const outputName = file.name.replace(/\.docx$/i, '.pdf');
+      return new File([pdfBlob], outputName, { type: 'application/pdf' });
+    }
+
+    async function convertDocToPdf(file) {
+      const { jsPDF } = await import('https://esm.sh/jspdf@2.5.1');
+
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let text = '';
+
+      // Intento básico para .doc binario: leer texto visible y limpiar ruido.
+      for (let i = 0; i < bytes.length; i += 1) {
+        const b = bytes[i];
+        if (b === 9 || b === 10 || b === 13 || (b >= 32 && b <= 126) || (b >= 160 && b <= 255)) {
+          text += String.fromCharCode(b);
+        } else {
+          text += ' ';
+        }
+      }
+
+      text = text
+        .replace(/\s+/g, ' ')
+        .replace(/([.!?])\s+/g, '$1\n\n')
+        .trim();
+
+      if (!text) {
+        throw new Error('No se pudo extraer texto del archivo DOC.');
+      }
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4',
+      });
+
+      pdf.setFont('times', 'normal');
+      pdf.setFontSize(12);
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 40;
+      const maxLineWidth = pageWidth - margin * 2;
+      const lineHeight = 18;
+      const paragraphs = text
+        .split(/\n{2,}/)
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      let cursorY = margin;
+
+      for (const paragraph of paragraphs) {
+        const lines = pdf.splitTextToSize(paragraph, maxLineWidth);
+
+        for (const line of lines) {
+          if (cursorY > pageHeight - margin) {
+            pdf.addPage();
+            cursorY = margin;
+          }
+
+          pdf.text(line, margin, cursorY);
+          cursorY += lineHeight;
+        }
+
+        cursorY += lineHeight * 0.5;
+      }
+
+      const pdfBlob = pdf.output('blob');
+      const outputName = file.name.replace(/\.doc$/i, '.pdf');
+      return new File([pdfBlob], outputName, { type: 'application/pdf' });
+    }
+
+    async function handleFileSelect(file) {
+      if (!isPdfFile(file) && !isDocxFile(file) && !isDocFile(file)) {
+        showError('⚠️ Por favor sube un archivo PDF, DOCX o DOC.');
         return;
       }
 
-      selectedFile = file;
-      document.getElementById('fileName').textContent = file.name;
-      document.getElementById('fileSize').textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
-      fileInfo.style.display = 'block';
-      uploadBtn.disabled = false;
       uploadStatus.innerHTML = '';
+      uploadBtn.disabled = true;
+      uploadProgress.style.display = 'block';
+      progressFill.style.width = '15%';
+
+      try {
+        selectedFile = file;
+        convertedUploadFile = file;
+
+        if (isDocxFile(file)) {
+          progressText.textContent = 'Convirtiendo DOCX a PDF...';
+          progressFill.style.width = '45%';
+          convertedUploadFile = await convertDocxToPdf(file);
+          progressText.textContent = 'Conversión completa. Listo para subir.';
+          progressFill.style.width = '100%';
+          updateFileInfo(convertedUploadFile, file.name);
+        } else if (isDocFile(file)) {
+          progressText.textContent = 'Convirtiendo DOC a PDF...';
+          progressFill.style.width = '45%';
+          convertedUploadFile = await convertDocToPdf(file);
+          progressText.textContent = 'Conversión completa. Nota: para conservar imágenes usa DOCX.';
+          progressFill.style.width = '100%';
+          updateFileInfo(convertedUploadFile, file.name);
+        } else {
+          progressText.textContent = 'Archivo PDF listo para subir.';
+          progressFill.style.width = '100%';
+          updateFileInfo(file);
+        }
+      } catch (error) {
+        selectedFile = null;
+        convertedUploadFile = null;
+        fileInfo.style.display = 'none';
+        uploadBtn.disabled = true;
+        showError(`⚠️ No se pudo convertir el archivo Word: ${error.message}`);
+      } finally {
+        window.setTimeout(() => {
+          uploadProgress.style.display = 'none';
+          progressFill.style.width = '0%';
+          progressText.textContent = 'Procesando...';
+        }, 500);
+      }
     }
 
     function handleCoverSelect(file) {
@@ -238,7 +506,7 @@ import Header from '../components/Header.astro';
     }
 
     uploadBtn.addEventListener('click', async () => {
-      if (!selectedFile) return;
+      if (!selectedFile || !convertedUploadFile) return;
 
       const titulo = document.getElementById('titulo').value.trim();
       const descripcion = document.getElementById('descripcion').value.trim();
@@ -260,7 +528,7 @@ import Header from '../components/Header.astro';
 
       uploadBtn.disabled = true;
       uploadProgress.style.display = 'block';
-      progressText.textContent = 'Subiendo archivo a la nube...';
+      progressText.textContent = 'Subiendo archivo PDF a la nube...';
 
       try {
         // Leemos el archivo en base64 para enviarlo al backend
@@ -268,7 +536,7 @@ import Header from '../components/Header.astro';
           const reader = new FileReader();
           reader.onload = (e) => resolve(e.target.result);
           reader.onerror = (e) => reject(new Error('Error al leer el archivo'));
-          reader.readAsDataURL(selectedFile);
+          reader.readAsDataURL(convertedUploadFile);
         });
 
         let coverBase64 = null;
@@ -298,9 +566,9 @@ import Header from '../components/Header.astro';
             categoria,
             edad_rango: edadRango,
             anio,
-            fileName: selectedFile.name,
+            fileName: convertedUploadFile.name,
             fileBase64,
-            mimeType: selectedFile.type,
+            mimeType: convertedUploadFile.type,
             coverName: selectedCover?.name || null,
             coverBase64,
             coverMimeType: selectedCover?.type || null
@@ -330,6 +598,7 @@ import Header from '../components/Header.astro';
           if (el.id === 'anio') el.value = new Date().getFullYear();
         });
         selectedFile = null;
+        convertedUploadFile = null;
         clearCover();
         fileInfo.style.display = 'none';
         uploadBtn.disabled = true;

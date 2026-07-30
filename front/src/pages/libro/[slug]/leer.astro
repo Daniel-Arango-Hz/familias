@@ -150,9 +150,15 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
     document.getElementById('btn-download').rel = 'noopener noreferrer';
 
     const isPdf = /\.pdf(\?|$)/i.test(libro.contenido_url);
+    const isWord = /\.(doc|docx)(\?|$)/i.test(libro.contenido_url);
     const contentArea = document.getElementById('reader-content');
     if (isPdf) {
       await renderPdfPaginated(contentArea);
+      return;
+    }
+
+    if (isWord) {
+      renderWordOnline(contentArea);
       return;
     }
 
@@ -165,9 +171,42 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
     contentArea.innerHTML = `
       <div class="doc-preview-unavailable">
         <h2>Vista previa no disponible</h2>
-        <p>Este libro se cargó en formato Word. Puedes descargarlo o abrirlo en una nueva pestaña.</p>
+        <p>Este formato todavía no se puede mostrar en el lector integrado. Puedes abrirlo en una nueva pestaña.</p>
         <a href="${libro.contenido_url}" target="_blank" rel="noopener noreferrer" class="doc-open-btn">Abrir archivo</a>
       </div>
+    `;
+  }
+
+  function renderWordOnline(contentArea) {
+    const tocList = document.getElementById('toc-list');
+    tocList.innerHTML = '<li><button class="toc-link active" disabled>Documento Word</button></li>';
+
+    const fill = document.getElementById('progress-fill');
+    if (fill) fill.style.width = '100%';
+
+    const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(libro.contenido_url)}`;
+
+    contentArea.innerHTML = `
+      <section class="doc-viewer-shell">
+        <div class="doc-viewer-wrap">
+          <iframe
+            class="doc-viewer"
+            src="${officeViewerUrl}"
+            title="Vista en línea del documento"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            allowfullscreen
+          ></iframe>
+        </div>
+
+        <div class="doc-viewer-fallback">
+          <p>Si no se carga la vista previa, abre el archivo directamente:</p>
+          <div class="doc-viewer-actions">
+            <a href="${libro.contenido_url}" target="_blank" rel="noopener noreferrer" class="doc-open-btn">Abrir archivo</a>
+            <a href="${libro.contenido_url}" download class="doc-open-btn doc-open-btn-secondary">Descargar</a>
+          </div>
+        </div>
+      </section>
     `;
   }
 
@@ -567,6 +606,55 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
     text-align: center;
   }
 
+  .doc-viewer-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .doc-viewer-wrap {
+    width: 100%;
+    min-height: calc(100vh - 180px);
+    background: var(--reader-card);
+    border: 1px solid var(--reader-border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .doc-viewer {
+    width: 100%;
+    min-height: calc(100vh - 180px);
+    border: none;
+    display: block;
+    background: #fff;
+  }
+
+  .doc-viewer-fallback {
+    padding: 1rem 1.1rem;
+    border-radius: 10px;
+    border: 1px solid var(--reader-border);
+    background: var(--reader-card);
+  }
+
+  .doc-viewer-fallback p {
+    margin: 0;
+    color: var(--reader-text);
+    font-size: 0.92rem;
+  }
+
+  .doc-viewer-actions {
+    display: flex;
+    gap: 0.65rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .doc-open-btn-secondary {
+    background: transparent;
+    color: #0d2240;
+    border: 1px solid #0d2240;
+  }
+
   .doc-preview-unavailable h2 {
     margin-bottom: 0.75rem;
   }
@@ -688,5 +776,10 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
     .reader-toc { position: static; }
     .toc-list { flex-direction: row; flex-wrap: wrap; gap: 0.5rem; }
     .toc-link { flex: 0 1 calc(33.33% - 0.35rem); }
+
+    .doc-viewer-wrap,
+    .doc-viewer {
+      min-height: calc(100vh - 220px);
+    }
   }
 </style>

@@ -223,6 +223,7 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
   .book-meta {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 1rem;
     font-size: 0.9rem;
     color: var(--color-text-muted);
@@ -233,6 +234,7 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
     display: flex;
     align-items: center;
     gap: 0.35rem;
+    white-space: nowrap;
     color: var(--color-primary-yellow);
     font-weight: 600;
   }
@@ -245,6 +247,7 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
     display: flex;
     align-items: center;
     gap: 0.35rem;
+    white-space: nowrap;
     color: var(--color-primary-blue);
     font-size: 0.9rem;
     font-weight: 500;
@@ -254,9 +257,17 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
     display: flex;
     align-items: center;
     gap: 0.35rem;
+    white-space: nowrap;
     font-size: 0.85rem;
     color: var(--color-primary-purple);
     font-weight: 600;
+  }
+
+  .book-meta svg,
+  .book-edad svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
   }
 
   @media (max-width: 768px) {
@@ -296,6 +307,12 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
 
     .book-edad {
       font-size: 0.8rem;
+    }
+
+    .book-meta svg,
+    .book-edad svg {
+      width: 0.9rem;
+      height: 0.9rem;
     }
   }
 
@@ -350,36 +367,55 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
     }
 
     .book-meta {
-      flex-direction: column;
-      gap: 0.5rem;
+      width: 100%;
+      display: grid;
+      grid-template-columns: auto auto;
+      justify-content: start;
+      align-items: center;
+      gap: 0.4rem 0.9rem;
       margin-top: 0.25rem;
     }
 
     .star-rating {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
     }
 
     .book-descargas {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
     }
 
     .book-edad {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
+      grid-column: 1 / -1;
+    }
+
+    .book-meta svg,
+    .book-edad svg {
+      width: 0.9rem;
+      height: 0.9rem;
     }
   }
+
+  .book-h-card {
     background: var(--color-white);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     overflow: hidden;
     transition: box-shadow 0.25s, transform 0.25s;
   }
-  .book-h-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+  .book-h-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
   .book-h-link {
     display: flex;
     align-items: stretch;
     gap: 1rem;
     padding: 1rem;
   }
+
   .book-h-thumb {
     width: 72px;
     min-width: 72px;
@@ -391,6 +427,7 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
     justify-content: center;
     overflow: hidden;
   }
+
   .h-cover-icon {
     font-size: 2rem;
     opacity: 0.7;
@@ -402,10 +439,50 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
     object-fit: cover;
     border-radius: 8px;
   }
+
   .book-h-info {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
     min-width: 0;
+  }
+
+  @media (max-width: 640px) {
+    .book-h-link {
+      gap: 0.75rem;
+      padding: 0.85rem;
+    }
+
+    .book-h-thumb {
+      width: 64px;
+      min-width: 64px;
+      height: 84px;
+    }
+
+    .book-h-info .book-meta {
+      width: 100%;
+      gap: 0.55rem;
+      font-size: 0.78rem;
+    }
+
+    .book-h-info .star-rating,
+    .book-h-info .book-descargas {
+      font-size: 0.78rem;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .book-h-info .book-meta {
+      display: grid;
+      grid-template-columns: auto auto;
+      justify-content: start;
+      align-items: center;
+      gap: 0.35rem 0.75rem;
+    }
+
+    .book-h-info .star-rating,
+    .book-h-info .book-descargas {
+      font-size: 0.74rem;
+    }
   }
 </style>

@@ -103,7 +103,7 @@ const testimonios = [
       </div>
     </section>
 
-    <section class="cta-participar">
+    <section class="cta-participar" id="cta-participar-galeria">
       <div class="container">
         <div class="cta-box">
           <h2>¿Tu familia quiere participar?</h2>
@@ -115,6 +115,17 @@ const testimonios = [
   </main>
   <CtaFooter />
 </Layout>
+
+<script>
+  import { getUsuario } from '../utils/api';
+
+  const usuario = getUsuario();
+  const ctaGaleria = document.getElementById('cta-participar-galeria');
+
+  if (usuario && ctaGaleria) {
+    ctaGaleria.style.display = 'none';
+  }
+</script>
 
 <style>
   .page-hero { background: var(--color-navy); color: var(--color-white); padding: 3.5rem 0; }

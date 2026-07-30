@@ -4,7 +4,6 @@ import Header from '../components/Header.astro';
 import CtaFooter from '../components/CtaFooter.astro';
 import BookCard from '../components/BookCard.astro';
 import { obtenerLibros } from '../utils/api';
-const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 
 const validOrders = new Set(['todos', 'destacado', 'nuevo', 'descargas', 'rating']);
 const ordenParam = Astro.url.searchParams.get('orden') ?? 'todos';
@@ -212,161 +211,6 @@ function buildBibliotecaUrl(next: { orden?: string; categoria?: string; edad?: s
   <CtaFooter />
 </Layout>
 
-<script define:vars={{ apiUrl }}>
-  const API_URL = apiUrl;
-
-  function getStateFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const orden = params.get('orden') || 'todos';
-    const categoria = params.get('categoria') || '';
-    const edad = params.get('edad') || '';
-    const q = params.get('q') || '';
-    return { orden, categoria, edad, q };
-  }
-
-  function buildPageUrl(state) {
-    const params = new URLSearchParams();
-    params.set('orden', state.orden || 'todos');
-    if (state.categoria) params.set('categoria', state.categoria);
-    if (state.edad) params.set('edad', state.edad);
-    if (state.q) params.set('q', state.q);
-    return `/biblioteca?${params.toString()}`;
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-
-  function isUrlCover(icon) {
-    return typeof icon === 'string' && /^https?:\/\//i.test(icon);
-  }
-
-  function formatNumber(value) {
-    return Number(value || 0).toLocaleString('es');
-  }
-
-  function renderBooks(books, q) {
-    const grid = document.querySelector('.books-grid');
-    const resultsCount = document.querySelector('.results-count');
-    if (!grid || !resultsCount) return;
-
-    const count = books.length;
-    const queryLabel = q ? ` para "<em>${escapeHtml(q)}</em>"` : '';
-    resultsCount.innerHTML = `<strong>${count}</strong> ${count === 1 ? 'libro encontrado' : 'libros encontrados'}${queryLabel}`;
-
-    if (count === 0) {
-      grid.innerHTML = '';
-      return;
-    }
-
-    grid.innerHTML = books.map((libro) => {
-      const portada = isUrlCover(libro.portada_icono)
-        ? `<img class="cover-image" src="${escapeHtml(libro.portada_icono)}" alt="Portada de ${escapeHtml(libro.titulo)}" loading="lazy" />`
-        : `<span class="cover-icon" aria-hidden="true">${escapeHtml(libro.portada_icono || '📖')}</span>`;
-
-      const categorias = Array.isArray(libro.categorias) ? libro.categorias : [];
-      const badges = categorias.map((cat) => `<span class="badge">${escapeHtml(cat)}</span>`).join('');
-
-      return `
-        <article class="book-card">
-          <a href="/libro/${encodeURIComponent(libro.slug)}" class="book-card-link" aria-label="Ver ${escapeHtml(libro.titulo)}">
-            <div class="book-cover" style="background: ${escapeHtml(libro.portada_gradiente || 'linear-gradient(135deg, #00a8e8, #b82db5)')}">
-              ${libro.destacado ? '<span class="badge badge-destacado">Destacado</span>' : ''}
-              ${portada}
-              <div class="cover-title-overlay">
-                <p class="cover-titulo">${escapeHtml(libro.titulo)}</p>
-                <p class="cover-autor">${escapeHtml(libro.autor_nombre || 'Anónimo')}</p>
-              </div>
-            </div>
-            <div class="book-info">
-              <p class="book-autor">${escapeHtml(libro.autor_nombre || 'Anónimo')}</p>
-              <h3 class="book-titulo">${escapeHtml(libro.titulo)}</h3>
-              <div class="book-tags">${badges}</div>
-              <div class="book-meta">
-                <div class="star-rating">⭐ ${Number(libro.rating_promedio || 0).toFixed(1)} <span>(${escapeHtml(libro.total_valoraciones || 0)})</span></div>
-                <div class="book-descargas">⬇ ${formatNumber(libro.descargas_total || 0)}</div>
-              </div>
-              <div class="book-edad">📘 ${escapeHtml(libro.edad_rango || 'N/A')}</div>
-            </div>
-          </a>
-        </article>
-      `;
-    }).join('');
-  }
-
-  function updateFilterUi(state) {
-    const links = document.querySelectorAll('[data-filter-kind][data-filter-value]');
-    links.forEach((link) => {
-      const kind = link.getAttribute('data-filter-kind');
-      const value = link.getAttribute('data-filter-value') || '';
-      const nextState = { ...state };
-      nextState[kind] = value;
-
-      if (kind === 'orden') {
-        nextState.orden = value || 'todos';
-      }
-
-      link.setAttribute('href', buildPageUrl(nextState));
-
-      const active = String(state[kind] || '') === value;
-      link.classList.toggle('active', active);
-    });
-  }
-
-  async function fetchAndRender(state) {
-    const params = new URLSearchParams();
-    if (state.orden && state.orden !== 'todos') params.set('orden', state.orden);
-    if (state.categoria) params.set('categoria', state.categoria);
-    if (state.edad) params.set('edad', state.edad);
-    if (state.q) params.set('q', state.q);
-    params.set('limit', '1000');
-
-    const res = await fetch(`${API_URL}/libros?${params.toString()}`, { cache: 'no-store' });
-    if (!res.ok) return;
-    const payload = await res.json();
-    const books = Array.isArray(payload) ? payload : (payload.data || []);
-    renderBooks(books, state.q);
-  }
-
-  async function applyState(state, pushHistory = false) {
-    if (pushHistory) {
-      history.pushState(state, '', buildPageUrl(state));
-    }
-    updateFilterUi(state);
-    await fetchAndRender(state);
-  }
-
-  document.addEventListener('DOMContentLoaded', async () => {
-    const initialState = getStateFromUrl();
-    await applyState(initialState, false);
-
-    document.addEventListener('click', async (event) => {
-      const link = event.target.closest('[data-filter-kind][data-filter-value]');
-      if (!link) return;
-
-      event.preventDefault();
-      const state = getStateFromUrl();
-      const kind = link.getAttribute('data-filter-kind');
-      const value = link.getAttribute('data-filter-value') || '';
-
-      state[kind] = value;
-      if (kind === 'orden' && !state.orden) state.orden = 'todos';
-
-      await applyState(state, true);
-    });
-
-    window.addEventListener('popstate', async () => {
-      const state = getStateFromUrl();
-      await applyState(state, false);
-    });
-  });
-</script>
-
 <style>
   .page-hero {
     background: linear-gradient(135deg, var(--color-primary-blue), var(--color-primary-purple), var(--color-primary-pink));
@@ -566,6 +410,8 @@ function buildBibliotecaUrl(next: { orden?: string; categoria?: string; edad?: s
       gap: 0.75rem;
     }
   }
+
+  .empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -587,13 +433,4 @@ function buildBibliotecaUrl(next: { orden?: string; categoria?: string; edad?: s
   }
   .btn-reset:hover { background: var(--color-navy-light); }
 
-  @media (max-width: 900px) {
-    .biblioteca-layout { grid-template-columns: 1fr; }
-    .sidebar { position: static; }
-    .books-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  @media (max-width: 480px) {
-    .books-grid { grid-template-columns: 1fr; }
-  }
 </style>

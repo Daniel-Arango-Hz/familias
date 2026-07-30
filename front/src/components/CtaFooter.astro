@@ -1,7 +1,7 @@
 ---
 ---
 
-<section class="cta-section">
+<section class="cta-section" id="cta-participacion-global">
   <div class="container">
     <div class="cta-box">
       <h2 class="cta-title">¿Tu familia quiere participar?</h2>
@@ -65,6 +65,17 @@
     </div>
   </div>
 </footer>
+
+<script>
+  import { getUsuario } from '../utils/api';
+
+  const ctaParticipacion = document.getElementById('cta-participacion-global');
+  const usuario = getUsuario();
+
+  if (usuario && ctaParticipacion) {
+    ctaParticipacion.style.display = 'none';
+  }
+</script>
 
 <style>
   .cta-section {

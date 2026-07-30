@@ -32,6 +32,20 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
       return localStorage.getItem('token');
     }
 
+    function setGuardarState(isGuardado) {
+      if (!btnGuardar) return;
+
+      if (isGuardado) {
+        btnGuardar.classList.add('guardado');
+        btnGuardar.textContent = '❤️ Guardado';
+        btnGuardar.setAttribute('aria-label', 'Quitar de guardados');
+      } else {
+        btnGuardar.classList.remove('guardado');
+        btnGuardar.textContent = '❤️ Guardar';
+        btnGuardar.setAttribute('aria-label', 'Guardar libro');
+      }
+    }
+
     // Obtener headers con autenticación
     function getAuthHeaders() {
       const token = getToken();
@@ -42,6 +56,34 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
         headers['Authorization'] = `Bearer ${token}`;
       }
       return headers;
+    }
+
+    async function hydrateGuardarState() {
+      if (!btnGuardar) return;
+      const token = getToken();
+      if (!token) {
+        setGuardarState(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${apiUrl}/libros/${libroSlug}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          setGuardarState(false);
+          return;
+        }
+
+        const data = await response.json();
+        setGuardarState(Boolean(data?.guardado));
+      } catch (error) {
+        console.warn('No se pudo cargar estado de guardado:', error);
+        setGuardarState(false);
+      }
     }
 
     // Leer en línea
@@ -135,6 +177,9 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 
     // Guardar/Like
     if (btnGuardar) {
+      setGuardarState(false);
+      hydrateGuardarState();
+
       btnGuardar.addEventListener('click', async () => {
         try {
           const token = getToken();
@@ -150,9 +195,15 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
             return;
           }
 
-          const response = await fetch(`${apiUrl}/libros/${libroSlug}/guardar`, {
+          btnGuardar.disabled = true;
+
+          const response = await fetch('/api/guardar', {
             method: 'POST',
-            headers: getAuthHeaders(),
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ libroSlug }),
           });
 
           if (response.status === 401) {
@@ -164,21 +215,14 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
               if (titleEl) titleEl.textContent = 'Sesión expirada';
               if (msgEl) msgEl.textContent = 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo. 🔐';
             }
+            btnGuardar.disabled = false;
             return;
           }
 
           if (!response.ok) throw new Error('Error al guardar');
 
           const data = await response.json();
-          const isGuardado = data.guardado;
-
-          if (isGuardado) {
-            btnGuardar.classList.add('guardado');
-            btnGuardar.textContent = '❤️ Guardado';
-          } else {
-            btnGuardar.classList.remove('guardado');
-            btnGuardar.textContent = '❤️ Guardar';
-          }
+          setGuardarState(Boolean(data?.guardado));
         } catch (error) {
           console.error('Error:', error);
           const modal = document.getElementById('loginModalOverlay');
@@ -189,6 +233,8 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
             if (titleEl) titleEl.textContent = 'Error';
             if (msgEl) msgEl.textContent = 'Error al guardar. Intenta de nuevo.';
           }
+        } finally {
+          if (btnGuardar) btnGuardar.disabled = false;
         }
       });
     }

@@ -130,7 +130,7 @@ router.get('/:slug', optionalAuth, async (req, res) => {
   // Si el usuario está autenticado, verificar si lo guardó
   let guardado = false;
   if (req.user) {
-    const { data: g } = await supabase
+    const { data: g } = await supabaseAdmin
       .from('guardados')
       .select('libro_id')
       .eq('usuario_id', req.user.id)
@@ -286,29 +286,55 @@ router.post(
 
 // ─── POST /libros/:slug/guardar ───────────────────────────────────────────────
 router.post('/:slug/guardar', requireAuth, async (req, res) => {
-  const { data: libro } = await supabase
-    .from('libros')
-    .select('id')
-    .eq('slug', req.params.slug)
-    .single();
+  try {
+    const { data: libro, error: libroError } = await supabaseAdmin
+      .from('libros')
+      .select('id')
+      .eq('slug', req.params.slug)
+      .single();
 
-  if (!libro) return res.status(404).json({ error: 'Libro no encontrado' });
+    if (libroError || !libro) {
+      return res.status(404).json({ error: 'Libro no encontrado' });
+    }
 
-  const { data: existe } = await supabase
-    .from('guardados')
-    .select('libro_id')
-    .eq('usuario_id', req.user.id)
-    .eq('libro_id', libro.id)
-    .maybeSingle();
+    const { data: existe, error: existeError } = await supabaseAdmin
+      .from('guardados')
+      .select('libro_id')
+      .eq('usuario_id', req.user.id)
+      .eq('libro_id', libro.id)
+      .maybeSingle();
 
-  if (existe) {
-    await supabase.from('guardados').delete()
-      .eq('usuario_id', req.user.id).eq('libro_id', libro.id);
-    return res.json({ guardado: false });
+    if (existeError) {
+      return res.status(500).json({ error: existeError.message });
+    }
+
+    if (existe) {
+      const { error: deleteError } = await supabaseAdmin
+        .from('guardados')
+        .delete()
+        .eq('usuario_id', req.user.id)
+        .eq('libro_id', libro.id);
+
+      if (deleteError) {
+        return res.status(500).json({ error: deleteError.message });
+      }
+
+      return res.json({ guardado: false });
+    }
+
+    const { error: insertError } = await supabaseAdmin
+      .from('guardados')
+      .insert({ usuario_id: req.user.id, libro_id: libro.id });
+
+    if (insertError) {
+      return res.status(500).json({ error: insertError.message });
+    }
+
+    res.json({ guardado: true });
+  } catch (error) {
+    console.error('Error al guardar/desguardar libro:', error);
+    res.status(500).json({ error: 'Error interno al guardar libro' });
   }
-
-  await supabase.from('guardados').insert({ usuario_id: req.user.id, libro_id: libro.id });
-  res.json({ guardado: true });
 });
 
 // ─── POST /libros (admin) ─────────────────────────────────────────────────────

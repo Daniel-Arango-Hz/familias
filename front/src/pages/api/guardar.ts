@@ -1,4 +1,21 @@
-const API_URL = import.meta.env.API_URL ?? 'http://localhost:3000/api';
+const API_URL = import.meta.env.API_URL ?? import.meta.env.PUBLIC_API_URL ?? 'http://localhost:3000/api';
+
+async function fetchGuardadoState(libroSlug: string, token: string): Promise<boolean> {
+  const verifyRes = await fetch(`${API_URL}/libros/${libroSlug}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'User-Agent': 'FamiliaLee-Frontend/1.0',
+    },
+  });
+
+  if (!verifyRes.ok) {
+    throw new Error(`No se pudo verificar guardado (status ${verifyRes.status})`);
+  }
+
+  const libro = await verifyRes.json();
+  return Boolean(libro?.guardado);
+}
 
 // Guardar/Desguardar libro
 export async function POST({ request }) {
@@ -33,41 +50,17 @@ export async function POST({ request }) {
     const response = await fetch(`${API_URL}/libros/${libroSlug}/guardar`, {
       method: 'POST',
       headers,
-      timeout: 10000
     });
 
     console.log(`[guardar] Backend response status:`, response.status);
     console.log(`[guardar] Response headers:`, response.headers.get('content-type'));
 
     if (response.status === 204 || response.status === 200) {
-      // Try to parse JSON if there's content
-      const responseText = await response.text();
-      console.log(`[guardar] Response body length:`, responseText.length);
-      console.log(`[guardar] Response body:`, responseText);
-
-      if (!responseText || responseText.trim() === '') {
-        // Empty response, assume success
-        console.log('[guardar] Empty response treated as success');
-        return new Response(
-          JSON.stringify({ guardado: true, success: true }),
-          { status: 200 }
-        );
-      }
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (e) {
-        console.error('[guardar] Failed to parse JSON:', responseText);
-        return new Response(
-          JSON.stringify({ error: 'Invalid JSON from backend', details: responseText }),
-          { status: 500 }
-        );
-      }
-
+      // Verifica estado real en DB para evitar falsos positivos.
+      const guardado = await fetchGuardadoState(libroSlug, token);
       return new Response(
         JSON.stringify({
-          guardado: data.guardado !== false,
+          guardado,
           success: true,
         }),
         { status: 200 }
@@ -90,9 +83,10 @@ export async function POST({ request }) {
       { status: response.status }
     );
   } catch (error) {
-    console.error('[guardar] Unexpected error:', error, error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[guardar] Unexpected error:', errorMessage);
     return new Response(
-      JSON.stringify({ error: 'Error al guardar', details: String(error) }),
+      JSON.stringify({ error: 'Error al guardar', details: errorMessage }),
       { status: 500 }
     );
   }

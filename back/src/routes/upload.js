@@ -14,8 +14,6 @@ function getJSZip()    { return (_JSZip    ??= require('jszip')); }
 const STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET || 'libros';
 const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/msword',
 ]);
 const ALLOWED_COVER_MIME_TYPES = new Set([
   'image/jpeg',
@@ -231,7 +229,7 @@ router.post('/upload', requireAuth, async (req, res) => {
     }
 
     if (!ALLOWED_MIME_TYPES.has(mimeType)) {
-      return res.status(400).json({ error: 'Unsupported file type. Only PDF, DOCX or DOC are allowed.' });
+      return res.status(400).json({ error: 'Unsupported file type. Only PDF is allowed. Convert Word to PDF before uploading.' });
     }
 
     const base64Payload = extractBase64Payload(fileBase64);
