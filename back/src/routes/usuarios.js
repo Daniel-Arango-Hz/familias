@@ -81,18 +81,69 @@ router.get('/guardados', requireAuth, async (req, res) => {
   const libroIds = guardados.map((g) => g.libro_id);
 
   const { data: libros, error: librosError } = await supabaseAdmin
-    .from('libros_completos')
-    .select('*')
+    .from('libros')
+    .select('id, slug, titulo, descripcion, portada_gradiente, portada_icono, descargas_total, autor_id, edad_rango, anio, destacado, nuevo, publicado')
     .in('id', libroIds);
 
   if (librosError) return res.status(500).json({ error: librosError.message });
+
+  const autorIds = [...new Set((libros || []).map((l) => l.autor_id).filter(Boolean))];
+
+  const { data: autoresData, error: autoresError } = autorIds.length
+    ? await supabaseAdmin
+        .from('autores')
+        .select('id, usuario:usuarios(nombre, apellido)')
+        .in('id', autorIds)
+    : { data: [], error: null };
+
+  if (autoresError) return res.status(500).json({ error: autoresError.message });
+
+  const { data: valoraciones, error: valoracionesError } = await supabaseAdmin
+    .from('valoraciones')
+    .select('libro_id, puntuacion')
+    .in('libro_id', libroIds);
+
+  if (valoracionesError) return res.status(500).json({ error: valoracionesError.message });
+
+  const autoresById = new Map(
+    (autoresData || []).map((a) => [
+      a.id,
+      `${a.usuario?.nombre || ''} ${a.usuario?.apellido || ''}`.trim() || 'Anónimo',
+    ])
+  );
+
+  const ratingsByLibroId = new Map();
+  for (const v of valoraciones || []) {
+    const current = ratingsByLibroId.get(v.libro_id) || { total: 0, count: 0 };
+    current.total += Number(v.puntuacion || 0);
+    current.count += 1;
+    ratingsByLibroId.set(v.libro_id, current);
+  }
 
   const librosById = new Map(
     (libros || []).map((libro) => [
       libro.id,
       {
-        ...libro,
+        id: libro.id,
+        slug: libro.slug,
+        titulo: libro.titulo,
+        descripcion: libro.descripcion,
+        portada_gradiente: libro.portada_gradiente,
         portada_icono: normalizeCoverIcon(libro.portada_icono),
+        descargas_total: libro.descargas_total || 0,
+        edad_rango: libro.edad_rango,
+        anio: libro.anio,
+        destacado: libro.destacado,
+        nuevo: libro.nuevo,
+        publicado: libro.publicado,
+        autor_nombre: autoresById.get(libro.autor_id) || 'Anónimo',
+        categorias: [],
+        rating_promedio: (() => {
+          const r = ratingsByLibroId.get(libro.id);
+          if (!r || !r.count) return 0;
+          return Number((r.total / r.count).toFixed(1));
+        })(),
+        total_valoraciones: ratingsByLibroId.get(libro.id)?.count || 0,
       },
     ])
   );
