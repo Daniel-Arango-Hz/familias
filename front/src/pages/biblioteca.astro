@@ -1,0 +1,599 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import CtaFooter from '../components/CtaFooter.astro';
+import BookCard from '../components/BookCard.astro';
+import { obtenerLibros } from '../utils/api';
+const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
+
+const validOrders = new Set(['todos', 'destacado', 'nuevo', 'descargas', 'rating']);
+const ordenParam = Astro.url.searchParams.get('orden') ?? 'todos';
+const orden = validOrders.has(ordenParam) ? ordenParam : 'todos';
+const filtroCategoria = Astro.url.searchParams.get('categoria') ?? '';
+const filtroEdad = Astro.url.searchParams.get('edad') ?? '';
+const q = Astro.url.searchParams.get('q') ?? '';
+
+// Obtener libros del backend
+let respuesta: any = { data: [] };
+let catalogoCompleto: any[] = [];
+try {
+  const [respuestaFiltrada, respuestaCatalogo] = await Promise.all([
+    obtenerLibros({
+    orden: orden === 'todos' ? undefined : (orden as 'destacado' | 'nuevo' | 'descargas' | 'rating'),
+    categoria: filtroCategoria || undefined,
+    edad: filtroEdad || undefined,
+    q: q || undefined,
+    limite: 1000,
+    }),
+    obtenerLibros({ limite: 1000 }),
+  ]);
+
+  respuesta = respuestaFiltrada;
+  catalogoCompleto = respuestaCatalogo.data || [];
+} catch (error) {
+  console.error('Error al obtener libros:', error);
+}
+
+let librosFiltrados = respuesta.data || [];
+
+// Filtrado adicional del lado del cliente si es necesario
+if (q) {
+  const query = q.toLowerCase();
+  librosFiltrados = librosFiltrados.filter(
+    (l: any) =>
+      l.titulo.toLowerCase().includes(query) ||
+      l.autor_nombre?.toLowerCase().includes(query) ||
+      l.categorias?.some((c: string) => c.toLowerCase().includes(query))
+  );
+}
+
+// Obtener categorías únicas del backend
+const categorias: string[] = Array.from(
+  new Set((catalogoCompleto.length ? catalogoCompleto : librosFiltrados).flatMap((l: any) => l.categorias || []))
+);
+
+// Obtener rangos de edad únicos del backend
+const edades: string[] = Array.from(
+  new Set((catalogoCompleto.length ? catalogoCompleto : librosFiltrados).map((l: any) => l.edad_rango).filter(Boolean))
+);
+
+function buildBibliotecaUrl(next: { orden?: string; categoria?: string; edad?: string; q?: string }) {
+  const params = new URLSearchParams();
+  const ordenNext = next.orden !== undefined ? next.orden : orden;
+  params.set('orden', ordenNext || 'todos');
+  const categoria = next.categoria !== undefined ? next.categoria : filtroCategoria;
+  const edad = next.edad !== undefined ? next.edad : filtroEdad;
+  const texto = next.q !== undefined ? next.q : q;
+  if (categoria) params.set('categoria', categoria);
+  if (edad) params.set('edad', edad);
+  if (texto) params.set('q', texto);
+  return `/biblioteca?${params.toString()}`;
+}
+---
+
+<Layout title="Biblioteca – FamiliaLee" description="Explora todos los libros y recursos de FamiliaLee.">
+  <Header />
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <div class="hero-content">
+          <h1 class="page-title">📚 ¡Descubre Historias Increíbles! 📚</h1>
+          <p class="page-desc">Explora nuestros libros especiales, llenos de aventuras, valores y diversión para toda la familia.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container biblioteca-layout">
+        <!-- Sidebar de filtros -->
+        <aside class="sidebar" aria-label="Filtros">
+          <div class="sidebar-section">
+            <h2 class="sidebar-title">Ordenar por</h2>
+            <ul class="filter-list">
+              {[
+                { value: 'todos', label: 'Todos' },
+                { value: 'destacado', label: 'Destacados' },
+                { value: 'nuevo', label: 'Nuevos' },
+                { value: 'descargas', label: 'Más descargados' },
+                { value: 'rating', label: 'Mejor valorados' },
+              ].map(({ value, label }) => (
+                <li>
+                  <a
+                    href={buildBibliotecaUrl({ orden: value })}
+                    data-filter-kind="orden"
+                    data-filter-value={value}
+                    class={`filter-link ${orden === value ? 'active' : ''}`}
+                  >
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="sidebar-section">
+            <h2 class="sidebar-title">Categoría</h2>
+            <ul class="filter-list">
+              <li>
+                <a href={buildBibliotecaUrl({ categoria: '' })} data-filter-kind="categoria" data-filter-value="" class={`filter-link ${!filtroCategoria ? 'active' : ''}`}>
+                  Todas
+                </a>
+              </li>
+              {categorias.map((cat) => (
+                <li>
+                  <a
+                    href={buildBibliotecaUrl({ categoria: cat })}
+                    data-filter-kind="categoria"
+                    data-filter-value={cat}
+                    class={`filter-link ${filtroCategoria === cat ? 'active' : ''}`}
+                  >
+                    {cat}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="sidebar-section">
+            <h2 class="sidebar-title">Edad</h2>
+            <ul class="filter-list">
+              <li>
+                <a href={buildBibliotecaUrl({ edad: '' })} data-filter-kind="edad" data-filter-value="" class={`filter-link ${!filtroEdad ? 'active' : ''}`}>
+                  Todas las edades
+                </a>
+              </li>
+              {edades.map((edad) => (
+                <li>
+                  <a
+                    href={buildBibliotecaUrl({ edad })}
+                    data-filter-kind="edad"
+                    data-filter-value={edad}
+                    class={`filter-link ${filtroEdad === edad ? 'active' : ''}`}
+                  >
+                    {edad}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+
+        <!-- Grid de libros -->
+        <div class="main-content">
+          <div class="results-header">
+            <p class="results-count">
+              <strong>{librosFiltrados.length}</strong> {librosFiltrados.length === 1 ? 'libro encontrado' : 'libros encontrados'}
+              {q && <span> para "<em>{q}</em>"</span>}
+            </p>
+          </div>
+
+          {librosFiltrados.length > 0 ? (
+            <div class="books-grid">
+              {librosFiltrados.map((libro: any) => {
+                // Adaptar datos del backend al formato esperado por BookCard
+                const libroAdaptado = {
+                  slug: libro.slug,
+                  titulo: libro.titulo,
+                  autor: libro.autor_nombre || 'Anónimo',
+                  autorSlug: libro.autor_slug || (libro.autor_nombre || 'anonimo').toLowerCase().replace(/\s+/g, '-'),
+                  descripcion: libro.descripcion,
+                  portadaGradiente: libro.portada_gradiente || 'from-blue-500 to-indigo-600',
+                  portadaIcono: libro.portada_icono || '📖',
+                  categorias: libro.categorias || [],
+                  rating: libro.rating_promedio || 0,
+                  votos: libro.total_valoraciones || 0,
+                  descargas: libro.descargas_total || 0,
+                  edadRango: libro.edad_rango || '5-12',
+                  destacado: libro.destacado || false,
+                  nuevo: libro.nuevo || false,
+                  paginas: libro.paginas_total || libro.paginas || 1,
+                  anio: libro.anio || new Date().getFullYear(),
+                  paginasContenido: Array.isArray(libro.paginas) ? libro.paginas : [],
+                };
+                return <BookCard libro={libroAdaptado} />;
+              })}
+            </div>
+          ) : (
+            <div class="empty-state">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <rect x="3" y="4" width="13" height="16" rx="2"/>
+                <path d="M7 8h5M7 12h5M7 16h3" stroke-linecap="round"/>
+                <circle cx="18" cy="18" r="4"/>
+                <line x1="20.83" y1="20.83" x2="22.5" y2="22.5"/>
+              </svg>
+              <p>No se encontraron libros con los filtros seleccionados.</p>
+              <a href="/biblioteca" class="btn-reset">Ver todos los libros</a>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  </main>
+  <CtaFooter />
+</Layout>
+
+<script define:vars={{ apiUrl }}>
+  const API_URL = apiUrl;
+
+  function getStateFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const orden = params.get('orden') || 'todos';
+    const categoria = params.get('categoria') || '';
+    const edad = params.get('edad') || '';
+    const q = params.get('q') || '';
+    return { orden, categoria, edad, q };
+  }
+
+  function buildPageUrl(state) {
+    const params = new URLSearchParams();
+    params.set('orden', state.orden || 'todos');
+    if (state.categoria) params.set('categoria', state.categoria);
+    if (state.edad) params.set('edad', state.edad);
+    if (state.q) params.set('q', state.q);
+    return `/biblioteca?${params.toString()}`;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function isUrlCover(icon) {
+    return typeof icon === 'string' && /^https?:\/\//i.test(icon);
+  }
+
+  function formatNumber(value) {
+    return Number(value || 0).toLocaleString('es');
+  }
+
+  function renderBooks(books, q) {
+    const grid = document.querySelector('.books-grid');
+    const resultsCount = document.querySelector('.results-count');
+    if (!grid || !resultsCount) return;
+
+    const count = books.length;
+    const queryLabel = q ? ` para "<em>${escapeHtml(q)}</em>"` : '';
+    resultsCount.innerHTML = `<strong>${count}</strong> ${count === 1 ? 'libro encontrado' : 'libros encontrados'}${queryLabel}`;
+
+    if (count === 0) {
+      grid.innerHTML = '';
+      return;
+    }
+
+    grid.innerHTML = books.map((libro) => {
+      const portada = isUrlCover(libro.portada_icono)
+        ? `<img class="cover-image" src="${escapeHtml(libro.portada_icono)}" alt="Portada de ${escapeHtml(libro.titulo)}" loading="lazy" />`
+        : `<span class="cover-icon" aria-hidden="true">${escapeHtml(libro.portada_icono || '📖')}</span>`;
+
+      const categorias = Array.isArray(libro.categorias) ? libro.categorias : [];
+      const badges = categorias.map((cat) => `<span class="badge">${escapeHtml(cat)}</span>`).join('');
+
+      return `
+        <article class="book-card">
+          <a href="/libro/${encodeURIComponent(libro.slug)}" class="book-card-link" aria-label="Ver ${escapeHtml(libro.titulo)}">
+            <div class="book-cover" style="background: ${escapeHtml(libro.portada_gradiente || 'linear-gradient(135deg, #00a8e8, #b82db5)')}">
+              ${libro.destacado ? '<span class="badge badge-destacado">Destacado</span>' : ''}
+              ${portada}
+              <div class="cover-title-overlay">
+                <p class="cover-titulo">${escapeHtml(libro.titulo)}</p>
+                <p class="cover-autor">${escapeHtml(libro.autor_nombre || 'Anónimo')}</p>
+              </div>
+            </div>
+            <div class="book-info">
+              <p class="book-autor">${escapeHtml(libro.autor_nombre || 'Anónimo')}</p>
+              <h3 class="book-titulo">${escapeHtml(libro.titulo)}</h3>
+              <div class="book-tags">${badges}</div>
+              <div class="book-meta">
+                <div class="star-rating">⭐ ${Number(libro.rating_promedio || 0).toFixed(1)} <span>(${escapeHtml(libro.total_valoraciones || 0)})</span></div>
+                <div class="book-descargas">⬇ ${formatNumber(libro.descargas_total || 0)}</div>
+              </div>
+              <div class="book-edad">📘 ${escapeHtml(libro.edad_rango || 'N/A')}</div>
+            </div>
+          </a>
+        </article>
+      `;
+    }).join('');
+  }
+
+  function updateFilterUi(state) {
+    const links = document.querySelectorAll('[data-filter-kind][data-filter-value]');
+    links.forEach((link) => {
+      const kind = link.getAttribute('data-filter-kind');
+      const value = link.getAttribute('data-filter-value') || '';
+      const nextState = { ...state };
+      nextState[kind] = value;
+
+      if (kind === 'orden') {
+        nextState.orden = value || 'todos';
+      }
+
+      link.setAttribute('href', buildPageUrl(nextState));
+
+      const active = String(state[kind] || '') === value;
+      link.classList.toggle('active', active);
+    });
+  }
+
+  async function fetchAndRender(state) {
+    const params = new URLSearchParams();
+    if (state.orden && state.orden !== 'todos') params.set('orden', state.orden);
+    if (state.categoria) params.set('categoria', state.categoria);
+    if (state.edad) params.set('edad', state.edad);
+    if (state.q) params.set('q', state.q);
+    params.set('limit', '1000');
+
+    const res = await fetch(`${API_URL}/libros?${params.toString()}`, { cache: 'no-store' });
+    if (!res.ok) return;
+    const payload = await res.json();
+    const books = Array.isArray(payload) ? payload : (payload.data || []);
+    renderBooks(books, state.q);
+  }
+
+  async function applyState(state, pushHistory = false) {
+    if (pushHistory) {
+      history.pushState(state, '', buildPageUrl(state));
+    }
+    updateFilterUi(state);
+    await fetchAndRender(state);
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const initialState = getStateFromUrl();
+    await applyState(initialState, false);
+
+    document.addEventListener('click', async (event) => {
+      const link = event.target.closest('[data-filter-kind][data-filter-value]');
+      if (!link) return;
+
+      event.preventDefault();
+      const state = getStateFromUrl();
+      const kind = link.getAttribute('data-filter-kind');
+      const value = link.getAttribute('data-filter-value') || '';
+
+      state[kind] = value;
+      if (kind === 'orden' && !state.orden) state.orden = 'todos';
+
+      await applyState(state, true);
+    });
+
+    window.addEventListener('popstate', async () => {
+      const state = getStateFromUrl();
+      await applyState(state, false);
+    });
+  });
+</script>
+
+<style>
+  .page-hero {
+    background: linear-gradient(135deg, var(--color-primary-blue), var(--color-primary-purple), var(--color-primary-pink));
+    color: var(--color-white);
+    padding: 3.5rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(255, 215, 61, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 50%, rgba(255, 215, 61, 0.15) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    animation: slideInDown 0.6s ease-out;
+  }
+
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .page-desc { 
+    color: rgba(255,255,255,0.95);
+    font-size: 1.05rem; 
+    max-width: 600px;
+    animation: slideInDown 0.6s ease-out 0.15s backwards;
+  }
+
+  .biblioteca-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    position: sticky;
+    top: 80px;
+  }
+
+  .sidebar-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--color-primary-blue);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .filter-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .filter-link {
+    display: block;
+    padding: 0.55rem 0.85rem;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text);
+    background: transparent;
+    transition: all 0.2s;
+    border-left: 4px solid transparent;
+  }
+
+  .filter-link:hover { 
+    background: var(--color-primary-blue);
+    color: var(--color-white);
+    transform: translateX(4px);
+  }
+
+  .filter-link.active { 
+    background: linear-gradient(90deg, var(--color-primary-blue), var(--color-primary-purple));
+    color: var(--color-white); 
+    font-weight: 600;
+    border-left: 4px solid var(--color-primary-pink);
+  }
+
+  .results-header { margin-bottom: 1.5rem; }
+  .results-count { font-size: 0.9rem; color: var(--color-text-muted); }
+  .results-count strong { color: var(--color-navy); }
+
+  .books-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 1200px) {
+    .books-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .biblioteca-layout {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .sidebar {
+      position: static;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .sidebar-section {
+      background: var(--color-white);
+      padding: 1.25rem;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--color-primary-blue);
+    }
+
+    .books-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .sidebar {
+      grid-template-columns: 1fr;
+    }
+
+    .books-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .page-title {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+    }
+
+    .page-desc {
+      font-size: 0.95rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .section {
+      padding: 2rem 0;
+    }
+
+    .page-hero {
+      padding: 2rem 0;
+    }
+
+    .sidebar-section {
+      padding: 1rem;
+      border-radius: var(--radius-md);
+    }
+
+    .sidebar-title {
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .filter-link {
+      padding: 0.5rem 0.65rem;
+      font-size: 0.85rem;
+    }
+
+    .books-grid {
+      gap: 0.75rem;
+    }
+  }
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--color-text-muted);
+  }
+
+  .btn-reset {
+    display: inline-flex;
+    padding: 0.55rem 1.25rem;
+    background: var(--color-navy);
+    color: var(--color-white);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn-reset:hover { background: var(--color-navy-light); }
+
+  @media (max-width: 900px) {
+    .biblioteca-layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; }
+    .books-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 480px) {
+    .books-grid { grid-template-columns: 1fr; }
+  }
+</style>

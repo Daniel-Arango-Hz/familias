@@ -1,0 +1,219 @@
+---
+---
+
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-box">
+      <h2 class="cta-title">¿Tu familia quiere participar?</h2>
+      <p class="cta-desc">
+        Comparte fotos, videos y testimonios de tu hogar con la comunidad de FamiliaLee.
+      </p>
+      <a href="/auth/registro" class="cta-btn">
+        Unirse ahora
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="/" class="footer-logo" aria-label="FamiliaLee inicio">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="3" y="4" width="13" height="16" rx="2" stroke="#c8872a" stroke-width="2"/>
+            <path d="M7 8h5M7 12h5M7 16h3" stroke="#c8872a" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M16 6l3 2-3 2V6z" fill="#0d2240"/>
+          </svg>
+          <span>FamiliaLee</span>
+        </a>
+        <p class="footer-desc">
+          Una comunidad de familias, autores e iglesias que comparten el amor por la lectura y la fe cristiana.
+        </p>
+        <blockquote class="footer-verse">
+          "Instruye al niño en su camino, y aun cuando fuere viejo no se apartará de él." — <cite>Proverbios 22:6</cite>
+        </blockquote>
+      </div>
+
+      <nav class="footer-nav" aria-label="Explorar">
+        <h3>EXPLORAR</h3>
+        <ul>
+          <li><a href="/biblioteca">Biblioteca</a></li>
+          <li><a href="/autores">Autores</a></li>
+          <li><a href="/galeria-familiar">Galería Familiar</a></li>
+          <li><a href="/recursos">Recursos</a></li>
+        </ul>
+      </nav>
+
+      <nav class="footer-nav" aria-label="Cuenta">
+        <h3>CUENTA</h3>
+        <ul>
+          <li><a href="/auth/registro">Registrarse</a></li>
+          <li><a href="/auth/login">Ingresar</a></li>
+          <li><a href="/panel">Mi Panel</a></li>
+          <li><a href="/admin">Administrador</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 FamiliaLee. Todos los derechos reservados.</p>
+      <p class="footer-heart">Hecho con <span aria-label="amor">♥</span> para las familias</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .cta-section {
+    background-color: var(--color-cream);
+    padding: 3rem 0;
+  }
+
+  .cta-box {
+    background: var(--color-cream-dark);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .cta-title {
+    font-family: var(--font-serif);
+    font-size: clamp(1.4rem, 3vw, 1.8rem);
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+
+  .cta-desc {
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    max-width: 480px;
+  }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.75rem;
+    background: var(--color-navy);
+    color: var(--color-white);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background 0.2s;
+    margin-top: 0.25rem;
+  }
+
+  .cta-btn:hover {
+    background: var(--color-navy-light);
+  }
+
+  /* Footer */
+  .footer {
+    background: var(--color-white);
+    border-top: 1px solid var(--color-border);
+    padding: 3.5rem 0 0;
+  }
+
+  .footer-top {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  .footer-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .footer-logo span {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+
+  .footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .footer-desc {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    line-height: 1.55;
+    max-width: 320px;
+  }
+
+  .footer-verse {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    border-left: 3px solid var(--color-gold);
+    padding-left: 0.75rem;
+    margin-top: 0.5rem;
+    line-height: 1.55;
+  }
+
+  .footer-nav h3 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .footer-nav ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .footer-nav a {
+    font-size: 0.9rem;
+    color: var(--color-text);
+    transition: color 0.2s;
+  }
+
+  .footer-nav a:hover {
+    color: var(--color-navy);
+  }
+
+  .footer-bottom {
+    border-top: 1px solid var(--color-border);
+    padding: 1.25rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .footer-heart {
+    color: var(--color-text-muted);
+  }
+
+  .footer-heart span {
+    color: #c8872a;
+  }
+
+  @media (max-width: 768px) {
+    .footer-top {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+</style>

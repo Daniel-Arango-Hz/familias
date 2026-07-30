@@ -1,0 +1,700 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+
+---
+
+<Layout title="Subir Libro – FamiliaLee" description="Sube tu libro en PDF o Word.">
+  <Header />
+  
+  <main class="upload-container">
+    <section class="upload-hero">
+      <div class="container">
+        <h1 class="upload-titulo">📤 Sube tu Libro</h1>
+        <p class="upload-subtitle">Carga un PDF o archivo Word y lo convertiremos automáticamente en un libro interactivo</p>
+      </div>
+    </section>
+
+    <section class="upload-content">
+      <div class="container">
+        <div class="upload-grid">
+          <aside class="upload-visual-column">
+            <article class="upload-banner-card">
+              <div class="banner-overlay"></div>
+              <div class="banner-copy">
+                <p class="banner-eyebrow">Publica Tu Historia</p>
+                <h2>Convierte tus páginas en una experiencia para toda la familia</h2>
+                <p>
+                  Sube tu libro en PDF o Word y compártelo con la comunidad de FamiliaLee.
+                  Puedes añadir una miniatura para que tu publicación destaque desde el primer vistazo.
+                </p>
+              </div>
+            </article>
+
+            <!-- Zona de Drop -->
+            <div class="drop-zone" id="dropZone">
+              <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <h2>Arrastra tu archivo aquí</h2>
+              <p>o haz clic para seleccionar</p>
+              <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt" style="display: none;" />
+            </div>
+          </aside>
+
+          <!-- Formulario -->
+          <div class="upload-form">
+            <h2>Información del Libro</h2>
+            
+            <div class="form-group">
+              <label for="titulo">Título *</label>
+              <input type="text" id="titulo" placeholder="Ej: Mi Historia Favorita" required />
+            </div>
+
+            <div class="form-group">
+              <label for="descripcion">Descripción *</label>
+              <textarea id="descripcion" placeholder="Breve descripción del libro" rows="4" required></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="autor">Autor *</label>
+                <input type="text" id="autor" placeholder="Tu nombre" required />
+              </div>
+
+              <div class="form-group">
+                <label for="edadRango">Edad Recomendada *</label>
+                <input type="text" id="edadRango" placeholder="Ej: 5-10" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="categoria">Categoría *</label>
+              <select id="categoria" required>
+                <option value="">Selecciona una categoría</option>
+                <option value="Biblia">Biblia</option>
+                <option value="Ficción">Ficción</option>
+                <option value="Educativo">Educativo</option>
+                <option value="Aventura">Aventura</option>
+                <option value="Drama">Drama</option>
+                <option value="Poesía">Poesía</option>
+                <option value="Historia">Historia</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="anio">Año de Publicación</label>
+              <input type="number" id="anio" placeholder="2026" value="2026" />
+            </div>
+
+            <div class="form-group">
+              <label for="coverInput">Miniatura del libro (opcional)</label>
+              <input type="file" id="coverInput" accept="image/jpeg,image/png,image/webp,image/gif" />
+              <small class="input-help">Formatos permitidos: JPG, PNG, WEBP o GIF (máx 5MB).</small>
+            </div>
+
+            <div id="coverPreview" class="cover-preview" style="display: none;">
+              <img id="coverPreviewImage" alt="Vista previa de miniatura" />
+              <div>
+                <p>🖼️ <strong id="coverName"></strong></p>
+                <p id="coverSize"></p>
+              </div>
+            </div>
+
+            <div id="fileInfo" class="file-info" style="display: none;">
+              <p>📄 <strong id="fileName"></strong></p>
+              <p id="fileSize"></p>
+            </div>
+
+            <div id="uploadProgress" class="upload-progress" style="display: none;">
+              <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+              <p id="progressText">Procesando...</p>
+            </div>
+
+            <button id="uploadBtn" class="btn-submit" disabled>Subir Libro</button>
+
+            <div id="uploadStatus" class="upload-status"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_URL = (import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInfo = document.getElementById('fileInfo');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const coverInput = document.getElementById('coverInput');
+    const coverPreview = document.getElementById('coverPreview');
+    const coverPreviewImage = document.getElementById('coverPreviewImage');
+
+    let selectedFile = null;
+    let selectedCover = null;
+
+    function showAuthRequiredModal() {
+      const modal = document.getElementById('loginModalOverlay');
+      const titleEl = document.getElementById('modalTitle');
+      const msgEl = document.getElementById('modalMessage');
+
+      if (titleEl) titleEl.textContent = 'Inicio de sesión requerido';
+      if (msgEl) msgEl.textContent = 'Debes iniciar sesión para publicar contenido.';
+      if (modal) modal.classList.add('active');
+    }
+
+    // Click to upload
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFileSelect(e.target.files[0]);
+      }
+    });
+
+    coverInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleCoverSelect(e.target.files[0]);
+      } else {
+        clearCover();
+      }
+    });
+
+    function handleFileSelect(file) {
+      const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+      
+      if (!validTypes.includes(file.type)) {
+        showError('⚠️ Por favor sube un archivo PDF o Word.');
+        return;
+      }
+
+      selectedFile = file;
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('fileSize').textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+      fileInfo.style.display = 'block';
+      uploadBtn.disabled = false;
+      uploadStatus.innerHTML = '';
+    }
+
+    function handleCoverSelect(file) {
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      if (!validTypes.includes(file.type)) {
+        showError('⚠️ La miniatura debe ser JPG, PNG, WEBP o GIF.');
+        coverInput.value = '';
+        clearCover();
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        showError('⚠️ La miniatura no puede superar 5MB.');
+        coverInput.value = '';
+        clearCover();
+        return;
+      }
+
+      selectedCover = file;
+      document.getElementById('coverName').textContent = file.name;
+      document.getElementById('coverSize').textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+      coverPreviewImage.src = URL.createObjectURL(file);
+      coverPreview.style.display = 'flex';
+    }
+
+    function clearCover() {
+      selectedCover = null;
+      coverPreview.style.display = 'none';
+      coverPreviewImage.removeAttribute('src');
+    }
+
+    uploadBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      const titulo = document.getElementById('titulo').value.trim();
+      const descripcion = document.getElementById('descripcion').value.trim();
+      const autor = document.getElementById('autor').value.trim();
+      const categoria = document.getElementById('categoria').value;
+      const edadRango = document.getElementById('edadRango').value.trim();
+      const anio = parseInt(document.getElementById('anio').value) || new Date().getFullYear();
+
+      if (!titulo || !descripcion || !autor || !categoria || !edadRango) {
+        showError('⚠️ Completa todos los campos obligatorios.');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showAuthRequiredModal();
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      uploadProgress.style.display = 'block';
+      progressText.textContent = 'Subiendo archivo a la nube...';
+
+      try {
+        // Leemos el archivo en base64 para enviarlo al backend
+        const fileBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = (e) => reject(new Error('Error al leer el archivo'));
+          reader.readAsDataURL(selectedFile);
+        });
+
+        let coverBase64 = null;
+        if (selectedCover) {
+          coverBase64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = () => reject(new Error('Error al leer la miniatura'));
+            reader.readAsDataURL(selectedCover);
+          });
+        }
+
+        progressText.textContent = 'Guardando metadatos del libro...';
+        progressFill.style.width = '50%';
+
+        // Enviar al backend
+        const response = await fetch(`${API_URL}/libros/upload`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            titulo,
+            descripcion,
+            autor,
+            categoria,
+            edad_rango: edadRango,
+            anio,
+            fileName: selectedFile.name,
+            fileBase64,
+            mimeType: selectedFile.type,
+            coverName: selectedCover?.name || null,
+            coverBase64,
+            coverMimeType: selectedCover?.type || null
+          })
+        });
+
+        progressFill.style.width = '90%';
+        progressText.textContent = 'Completando...';
+
+        if (response.status === 401) {
+          showAuthRequiredModal();
+          throw new Error('Tu sesión expiró. Inicia sesión nuevamente.');
+        }
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Error desconocido');
+        }
+
+        const result = await response.json();
+        progressFill.style.width = '100%';
+        showSuccess(`✅ ¡Libro subido exitosamente! Redirigiendo al dashboard...`);
+        
+        // Reset form
+        document.querySelectorAll('input, textarea, select').forEach(el => {
+          if (el.type !== 'file' && el.type !== 'number') el.value = '';
+          if (el.id === 'anio') el.value = new Date().getFullYear();
+        });
+        selectedFile = null;
+        clearCover();
+        fileInfo.style.display = 'none';
+        uploadBtn.disabled = true;
+        uploadProgress.style.display = 'none';
+        fileInput.value = '';
+        coverInput.value = '';
+
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1200);
+
+      } catch (error) {
+        showError(`❌ Error: ${error.message}`);
+      } finally {
+        uploadBtn.disabled = false;
+        progressFill.style.width = '0%';
+      }
+    });
+
+    function showError(msg) {
+      uploadStatus.innerHTML = `<div class="status-error">${msg}</div>`;
+      uploadStatus.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function showSuccess(msg) {
+      uploadStatus.innerHTML = `<div class="status-success">${msg}</div>`;
+      uploadStatus.scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+
+  <style is:global>
+    .upload-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+
+    .upload-hero {
+      padding: 3rem 0;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.5);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .upload-titulo {
+      font-size: 2.5rem;
+      margin: 0 0 0.5rem 0;
+      color: #0d2240;
+    }
+
+    .upload-subtitle {
+      font-size: 1.1rem;
+      color: #666;
+      margin: 0;
+    }
+
+    .upload-content {
+      padding: 3rem 0;
+    }
+
+    .upload-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 2rem;
+      max-width: 1120px;
+      margin: 0 auto;
+      align-items: start;
+    }
+
+    .upload-visual-column {
+      display: grid;
+      gap: 1rem;
+      position: sticky;
+      top: 1rem;
+    }
+
+    .upload-banner-card {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: 260px;
+      padding: 2rem;
+      color: #0d2240;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(212, 175, 55, 0.55), transparent 45%),
+        linear-gradient(140deg, #fdf7dc 0%, #f3f7ff 55%, #dde9ff 100%);
+      border: 1px solid rgba(13, 34, 64, 0.12);
+      box-shadow: 0 12px 24px rgba(13, 34, 64, 0.08);
+    }
+
+    .banner-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.16),
+          rgba(255, 255, 255, 0.16) 10px,
+          rgba(255, 255, 255, 0) 10px,
+          rgba(255, 255, 255, 0) 22px
+        );
+      pointer-events: none;
+    }
+
+    .banner-copy {
+      position: relative;
+      z-index: 1;
+    }
+
+    .banner-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #27416b;
+      margin: 0 0 0.8rem;
+      padding: 0.35rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(39, 65, 107, 0.16);
+    }
+
+    .banner-copy h2 {
+      margin: 0;
+      font-size: clamp(1.2rem, 2vw, 1.6rem);
+      line-height: 1.25;
+      color: #0b2340;
+    }
+
+    .banner-copy p {
+      margin: 0.9rem 0 0;
+      font-size: 0.98rem;
+      color: #264160;
+      line-height: 1.55;
+    }
+
+    .drop-zone {
+      border: 3px dashed #0d2240;
+      border-radius: 12px;
+      padding: 2.25rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 210px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .drop-zone:hover {
+      border-color: #1a6ec3;
+      background: #f9f9f9;
+    }
+
+    .drop-zone.dragover {
+      border-color: #d4af37;
+      background: #fffbf0;
+      transform: scale(1.02);
+    }
+
+    .upload-icon {
+      color: #0d2240;
+      margin-bottom: 1rem;
+    }
+
+    .drop-zone h2 {
+      margin: 0.5rem 0;
+      color: #0d2240;
+      font-size: 1.3rem;
+    }
+
+    .drop-zone p {
+      margin: 0.5rem 0 0 0;
+      color: #666;
+    }
+
+    .upload-form {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(13, 34, 64, 0.12);
+      border: 1px solid rgba(13, 34, 64, 0.08);
+    }
+
+    .upload-form h2 {
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      color: #0d2240;
+      font-size: 1.3rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #0d2240;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #0d2240;
+      box-shadow: 0 0 0 3px rgba(13, 34, 64, 0.1);
+    }
+
+    .input-help {
+      display: block;
+      margin-top: 0.4rem;
+      color: #667085;
+      font-size: 0.82rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .file-info {
+      background: #f0f8ff;
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 4px solid #0d2240;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .cover-preview {
+      display: flex;
+      gap: 0.9rem;
+      align-items: center;
+      margin-bottom: 1rem;
+      background: #f8f8ff;
+      border: 1px solid #dbe4ff;
+      border-radius: 8px;
+      padding: 0.75rem;
+    }
+
+    .cover-preview img {
+      width: 72px;
+      height: 96px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+    }
+
+    .cover-preview p {
+      margin: 0.2rem 0;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+
+    .file-info p {
+      margin: 0.25rem 0;
+      color: #0d2240;
+    }
+
+    .upload-progress {
+      margin-bottom: 1rem;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0d2240, #1a6ec3);
+      width: 0;
+      transition: width 0.3s;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 0.9rem;
+      background: linear-gradient(135deg, #0d2240, #1a6ec3);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 1rem;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(13, 34, 64, 0.2);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .upload-status {
+      margin-top: 1rem;
+    }
+
+    .status-error {
+      background: #fee;
+      color: #c33;
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 4px solid #c33;
+    }
+
+    .status-success {
+      background: #efe;
+      color: #3c3;
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 4px solid #3c3;
+    }
+
+    @media (max-width: 768px) {
+      .upload-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .upload-visual-column {
+        position: static;
+      }
+
+      .upload-banner-card {
+        min-height: 220px;
+        padding: 1.5rem;
+      }
+
+      .upload-titulo {
+        font-size: 1.8rem;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</Layout>

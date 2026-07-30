@@ -1,0 +1,150 @@
+---
+import BookCard from './BookCard.astro';
+import { obtenerLibros } from '../utils/api';
+import type { Libro } from '../data/libros';
+
+let librosDestacados: any[] = [];
+try {
+  const respuesta = await obtenerLibros({ orden: 'destacado', limite: 4 });
+  librosDestacados = respuesta.data || [];
+} catch (error) {
+  console.error('Error al obtener libros destacados:', error);
+}
+---
+
+{librosDestacados.length > 0 && (
+  <section class="section section-bg" id="biblioteca">
+    <div class="container">
+      <div class="section-header section-header-row">
+        <div class="section-header">
+          <h2>Libros Destacados</h2>
+          <p>Seleccionados por nuestra comunidad para toda la familia</p>
+        </div>
+        <a href="/biblioteca" class="ver-mas">Ver biblioteca completa →</a>
+      </div>
+
+      <div class="books-grid">
+        {librosDestacados.map((libro: any) => {
+          const libroAdaptado: Libro = {
+            slug: libro.slug,
+            titulo: libro.titulo,
+            autor: libro.autor_nombre || 'Anónimo',
+            descripcion: libro.descripcion,
+            portadaGradiente: libro.portada_gradiente || 'from-blue-500 to-indigo-600',
+            portadaIcono: libro.portada_icono || '📖',
+            categorias: libro.categorias || [],
+            rating: libro.rating_promedio || 0,
+            votos: libro.total_valoraciones || 0,
+            descargas: libro.descargas_total || 0,
+            edadRango: libro.edad_rango || '5-12',
+            autorSlug: libro.autor_slug || '',
+            paginas: Number(libro.paginas_total || 0),
+            anio: Number(libro.anio_publicacion || new Date().getFullYear()),
+            paginasContenido: Array.isArray(libro.paginas_contenido) ? libro.paginas_contenido : [],
+            destacado: libro.destacado || false,
+            nuevo: libro.nuevo || false,
+          };
+          return <BookCard libro={libroAdaptado} />;
+        })}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .books-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+
+  .book-card {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: box-shadow 0.25s, transform 0.25s;
+  }
+
+  .book-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+  }
+
+  .book-card-link {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .book-cover {
+    position: relative;
+    aspect-ratio: 3/4;
+    background: var(--color-cream-dark);
+    display: flex;
+    align-items: flex-start;
+    padding: 0.75rem;
+  }
+
+  .book-info {
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .book-autor {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+  }
+
+  .book-titulo {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    line-height: 1.3;
+  }
+
+  .book-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .book-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-top: 0.2rem;
+  }
+
+  .book-descargas {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+  }
+
+  .book-edad {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 1024px) {
+    .books-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .books-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

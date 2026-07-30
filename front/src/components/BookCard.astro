@@ -1,0 +1,411 @@
+---
+import type { Libro } from '../data/libros';
+
+interface Props {
+  libro: Libro;
+  variante?: 'vertical' | 'horizontal';
+}
+
+const { libro, variante = 'vertical' } = Astro.props;
+const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.test(libro.portadaIcono);
+---
+
+{variante === 'vertical' ? (
+  <article class="book-card">
+    <a href={`/libro/${libro.slug}`} class="book-card-link" aria-label={`Ver ${libro.titulo}`}>
+      <div class="book-cover" style={`background: ${libro.portadaGradiente}`}>
+        {libro.destacado && <span class="badge badge-destacado">Destacado</span>}
+        {isImageCover ? (
+          <img class="cover-image" src={libro.portadaIcono} alt={`Portada de ${libro.titulo}`} loading="lazy" />
+        ) : (
+          <span class="cover-icon" aria-hidden="true">{libro.portadaIcono}</span>
+        )}
+        <div class="cover-title-overlay">
+          <p class="cover-titulo">{libro.titulo}</p>
+          <p class="cover-autor">{libro.autor}</p>
+        </div>
+      </div>
+      <div class="book-info">
+        <p class="book-autor">{libro.autor}</p>
+        <h3 class="book-titulo">{libro.titulo}</h3>
+        <div class="book-tags">
+          {libro.categorias.map((cat) => <span class="badge">{cat}</span>)}
+        </div>
+        <div class="book-meta">
+          <div class="star-rating">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            {libro.rating} <span>({libro.votos})</span>
+          </div>
+          <div class="book-descargas">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            {libro.descargas.toLocaleString('es')}
+          </div>
+        </div>
+        <div class="book-edad">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="4" width="13" height="16" rx="2"/>
+            <path d="M7 8h5M7 12h5M7 16h3" stroke-linecap="round"/>
+          </svg>
+          {libro.edadRango}
+        </div>
+      </div>
+    </a>
+  </article>
+) : (
+  <article class="book-h-card">
+    <a href={`/libro/${libro.slug}`} class="book-h-link" aria-label={`Ver ${libro.titulo}`}>
+      <div class="book-h-thumb" style={`background: ${libro.portadaGradiente}`} aria-hidden="true">
+        {isImageCover ? (
+          <img class="h-cover-image" src={libro.portadaIcono} alt="Portada" loading="lazy" />
+        ) : (
+          <span class="h-cover-icon">{libro.portadaIcono}</span>
+        )}
+      </div>
+      <div class="book-h-info">
+        <p class="book-autor">{libro.autor}</p>
+        <h3 class="book-titulo">{libro.titulo}</h3>
+        <div class="book-tags">
+          {libro.categorias.map((cat) => <span class="badge">{cat}</span>)}
+          <span class="badge">{libro.edadRango}</span>
+        </div>
+        <div class="book-meta">
+          <div class="star-rating">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            {libro.rating}
+          </div>
+          <div class="book-descargas">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            {libro.descargas.toLocaleString('es')}
+          </div>
+        </div>
+      </div>
+    </a>
+  </article>
+)}
+
+<style>
+  /* Vertical */
+  .book-card {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: all 0.3s;
+    border: 3px solid var(--color-primary-blue);
+    position: relative;
+  }
+
+  .book-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(0, 168, 232, 0), rgba(0, 168, 232, 0.15));
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .book-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-8px) scale(1.02);
+    border-color: var(--color-primary-pink);
+  }
+
+  .book-card:hover::before {
+    opacity: 1;
+  }
+
+  .book-card-link {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+  }
+
+  .book-cover {
+    position: relative;
+    aspect-ratio: 3/4;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 1rem;
+    overflow: hidden;
+  }
+
+  .cover-icon {
+    font-size: 4.5rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    opacity: 0.4;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .cover-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cover-title-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem 1rem 1rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+  }
+
+  .cover-titulo {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .cover-autor {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 0.25rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    font-weight: 500;
+  }
+
+  .book-info {
+    padding: 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .book-autor {
+    font-size: 0.85rem;
+    color: var(--color-primary-blue);
+    font-weight: 600;
+  }
+
+  .book-titulo {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.35;
+  }
+
+  .book-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .book-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    margin-top: 0.3rem;
+  }
+
+  .star-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--color-primary-yellow);
+    font-weight: 600;
+  }
+
+  .star-rating svg {
+    color: var(--color-primary-yellow);
+  }
+
+  .book-descargas {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--color-primary-blue);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .book-edad {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--color-primary-purple);
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .book-card {
+      border-width: 2px;
+    }
+
+    .cover-icon {
+      font-size: 3.5rem;
+    }
+
+    .book-info {
+      padding: 1.1rem;
+      gap: 0.5rem;
+    }
+
+    .book-titulo {
+      font-size: 0.95rem;
+    }
+
+    .book-autor {
+      font-size: 0.8rem;
+    }
+
+    .book-meta {
+      font-size: 0.85rem;
+      gap: 0.75rem;
+    }
+
+    .star-rating {
+      font-size: 0.8rem;
+    }
+
+    .book-descargas {
+      font-size: 0.8rem;
+    }
+
+    .book-edad {
+      font-size: 0.8rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .book-card {
+      border-width: 2px;
+    }
+
+    .book-cover {
+      aspect-ratio: 3/4;
+      padding: 0.75rem;
+    }
+
+    .cover-icon {
+      font-size: 2.5rem;
+    }
+
+    .cover-title-overlay {
+      padding: 1rem 0.75rem 0.75rem;
+    }
+
+    .cover-titulo {
+      font-size: 0.8rem;
+    }
+
+    .cover-autor {
+      font-size: 0.7rem;
+      margin-top: 0.15rem;
+    }
+
+    .book-info {
+      padding: 1rem;
+      gap: 0.4rem;
+    }
+
+    .book-autor {
+      font-size: 0.75rem;
+    }
+
+    .book-titulo {
+      font-size: 0.9rem;
+      line-height: 1.3;
+    }
+
+    .book-tags {
+      gap: 0.35rem;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+    }
+
+    .book-meta {
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .star-rating {
+      font-size: 0.75rem;
+    }
+
+    .book-descargas {
+      font-size: 0.75rem;
+    }
+
+    .book-edad {
+      font-size: 0.75rem;
+    }
+  }
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: box-shadow 0.25s, transform 0.25s;
+  }
+  .book-h-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .book-h-link {
+    display: flex;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .book-h-thumb {
+    width: 72px;
+    min-width: 72px;
+    height: 90px;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .h-cover-icon {
+    font-size: 2rem;
+    opacity: 0.7;
+  }
+
+  .h-cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  .book-h-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+</style>

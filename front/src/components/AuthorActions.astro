@@ -1,0 +1,208 @@
+---
+interface Props {
+  autorId: string;
+  autorNombre: string;
+  autorEmail?: string;
+}
+
+const { autorId, autorNombre, autorEmail } = Astro.props;
+---
+
+<div class="autor-actions-row">
+  <button class="btn-seguir" id="btn-seguir" data-autor-id={autorId} data-autor-nombre={autorNombre}>
+    ⭐ Seguir autor
+  </button>
+  <button class="btn-contactar" id="btn-contactar" data-autor-email={autorEmail || ''}>
+    💬 Contactar
+  </button>
+</div>
+
+<script define:vars={{ autorId, autorNombre, autorEmail }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const btnSeguir = document.getElementById('btn-seguir');
+    const btnContactar = document.getElementById('btn-contactar');
+
+    // Obtener token del localStorage
+    function getToken() {
+      return localStorage.getItem('token');
+    }
+
+    // Obtener headers con autenticación
+    function getAuthHeaders() {
+      const token = getToken();
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      return headers;
+    }
+
+    // Seguir autor
+    if (btnSeguir) {
+      btnSeguir.addEventListener('click', async () => {
+        try {
+          btnSeguir.disabled = true;
+
+          const token = getToken();
+          if (!token) {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+              modal.classList.add('active');
+              const titleEl = document.getElementById('modalTitle');
+              const msgEl = document.getElementById('modalMessage');
+              if (titleEl) titleEl.textContent = '⭐ Seguir autores';
+              if (msgEl) msgEl.textContent = 'Debes iniciar sesión para seguir autores. ⭐';
+              btnSeguir.disabled = false;
+            }
+            return;
+          }
+
+          const response = await fetch(`http://localhost:3000/api/autores/${autorId}/seguir`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+          });
+
+          if (response.status === 401) {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+              modal.classList.add('active');
+              const titleEl = document.getElementById('modalTitle');
+              const msgEl = document.getElementById('modalMessage');
+              if (titleEl) titleEl.textContent = 'Sesión expirada';
+              if (msgEl) msgEl.textContent = 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo. 🔐';
+            }
+            btnSeguir.disabled = false;
+            return;
+          }
+
+          if (!response.ok) throw new Error('Error al seguir');
+
+          const data = await response.json();
+          const isSiguiendo = data.siguiendo;
+
+          if (isSiguiendo) {
+            btnSeguir.classList.add('siguiendo');
+            btnSeguir.textContent = '⭐ Siguiendo';
+            
+            // Actualizar contador de seguidores
+            const seguidoresEl = document.getElementById('seguidores-count');
+            if (seguidoresEl && data.total_seguidores !== undefined) {
+              seguidoresEl.textContent = data.total_seguidores;
+            }
+          } else {
+            btnSeguir.classList.remove('siguiendo');
+            btnSeguir.textContent = '⭐ Seguir autor';
+            
+            // Actualizar contador de seguidores
+            const seguidoresEl = document.getElementById('seguidores-count');
+            if (seguidoresEl && data.total_seguidores !== undefined) {
+              seguidoresEl.textContent = data.total_seguidores;
+            }
+          }
+
+          btnSeguir.disabled = false;
+        } catch (error) {
+          console.error('Error:', error);
+          const modal = document.getElementById('loginModalOverlay');
+          if (modal) {
+            modal.classList.add('active');
+            const titleEl = document.getElementById('modalTitle');
+            const msgEl = document.getElementById('modalMessage');
+            if (titleEl) titleEl.textContent = 'Error';
+            if (msgEl) msgEl.textContent = 'Error al seguir. Intenta de nuevo.';
+          }
+          btnSeguir.disabled = false;
+        }
+      });
+    }
+
+    // Contactar
+    if (btnContactar) {
+      btnContactar.addEventListener('click', () => {
+        if (!autorEmail || autorEmail.trim() === '') {
+          const modal = document.getElementById('loginModalOverlay');
+          if (modal) {
+            modal.classList.add('active');
+            const titleEl = document.getElementById('modalTitle');
+            const msgEl = document.getElementById('modalMessage');
+            if (titleEl) titleEl.textContent = 'Contactar autor';
+            if (msgEl) msgEl.textContent = `Para contactar a ${autorNombre}, abre tu cliente de email.`;
+          }
+          return;
+        }
+        window.location.href = `mailto:${autorEmail}?subject=Contacto desde FamiliaLee`;
+      });
+    }
+  });
+</script>
+
+<style>
+  .autor-actions-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-seguir,
+  .btn-contactar {
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .btn-seguir {
+    background: linear-gradient(135deg, #ffd93d, #ffb534);
+    color: white;
+  }
+
+  .btn-seguir:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 217, 61, 0.3);
+  }
+
+  .btn-seguir.siguiendo {
+    background: linear-gradient(135deg, #ffc857, #ffb534);
+    box-shadow: 0 4px 12px rgba(255, 200, 87, 0.3);
+  }
+
+  .btn-contactar {
+    background: transparent;
+    border: 2.5px solid white;
+    color: white;
+  }
+
+  .btn-contactar:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .btn-seguir:disabled,
+  .btn-contactar:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 680px) {
+    .autor-actions-row {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .btn-seguir,
+    .btn-contactar {
+      flex: 1;
+      min-width: unset;
+      width: 100%;
+    }
+  }
+</style>

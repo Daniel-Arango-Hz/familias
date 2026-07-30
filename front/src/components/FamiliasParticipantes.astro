@@ -1,0 +1,424 @@
+---
+const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
+
+function formatFecha(raw: string) {
+  if (!raw) return 'Sin fecha';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return 'Sin fecha';
+  return d.toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+let participantes: any[] = [];
+try {
+  const res = await fetch(`${API_URL}/galeria?limit=3`);
+  if (res.ok) {
+    const payload = await res.json();
+    const data = Array.isArray(payload) ? payload : (payload.data || []);
+    participantes = data.map((item: any) => ({
+      id: item.id,
+      familia: item.nombre_familia || item.usuario_nombre || 'Familia participante',
+      fecha: formatFecha(item.created_at),
+      texto: typeof item.texto === 'string' ? item.texto.trim() : '',
+      tipo: item.tipo === 'foto' ? 'Foto' : 'Testimonio',
+      likes: Number(item.total_likes || 0),
+      imagen: item.tipo === 'foto' && !!item.imagen_url,
+      imagenUrl: item.imagen_url || '',
+    }));
+  }
+} catch (error) {
+  console.error('Error al obtener familias participantes:', error);
+}
+---
+
+<section class="section section-bg" id="galeria" data-api={API_URL}>
+  <div class="container">
+    <div class="section-header section-header-row">
+      <div class="section-header">
+        <h2>Familias Participantes</h2>
+        <p>Testimonios y momentos compartidos por nuestra comunidad</p>
+      </div>
+      <div class="section-actions">
+        <a href="/galeria-familiar" class="ver-mas">Ver galería familiar →</a>
+        <div class="upload-actions" aria-label="Acciones para compartir en familia">
+          <button type="button" class="upload-btn js-open-upload" data-upload-type="foto">Subir foto</button>
+          <button type="button" class="upload-btn js-open-upload" data-upload-type="video">Subir video</button>
+          <button type="button" class="upload-btn js-open-upload" data-upload-type="comentario">Compartir comentario</button>
+        </div>
+      </div>
+    </div>
+
+    {participantes.length > 0 ? (
+    <div class="familias-grid" id="familiasGrid">
+      {participantes.map((item) => (
+        <article class="familia-card">
+          <div class="familia-header">
+            <div class="familia-avatar" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9aabb8" stroke-width="1.5" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div>
+              <p class="familia-nombre">{item.familia}</p>
+              <time class="familia-fecha" datetime="2024-11-12">{item.fecha}</time>
+            </div>
+          </div>
+
+          {item.imagen && (
+            <img class="familia-img" src={item.imagenUrl} alt={`Foto de ${item.familia}`} loading="lazy" />
+          )}
+
+          {item.texto && <p class="familia-texto">{item.texto}</p>}
+
+          <hr class="familia-divider" />
+          <div class="familia-footer">
+            <button
+              class="familia-like js-like-btn"
+              data-id={item.id}
+              data-liked="false"
+              aria-label={`${item.likes} me gusta`}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              <span class="like-count">{item.likes}</span>
+            </button>
+            <span class="familia-tipo">{item.tipo}</span>
+          </div>
+        </article>
+      ))}
+    </div>
+    ) : (
+      <div class="empty-familias" id="familiasEmpty">
+        <p>Aún no hay testimonios publicados.</p>
+      </div>
+    )}
+  </div>
+</section>
+
+<script>
+  // @ts-nocheck
+  (() => {
+    const section = document.getElementById('galeria');
+    const apiUrl = section?.getAttribute('data-api') || 'http://localhost:3000/api';
+    function esc(str: unknown): string {
+      return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function formatFecha(raw) {
+      if (!raw) return 'Sin fecha';
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return 'Sin fecha';
+      return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    function buildCard(item) {
+      const familia = item.nombre_familia || item.usuario_nombre || 'Familia participante';
+      const fecha = formatFecha(String(item.created_at || ''));
+      const tipo = item.tipo === 'foto' ? 'Foto' : 'Testimonio';
+      const likes = Number(item.total_likes || 0);
+      const tieneImagen = item.tipo === 'foto' && !!item.imagen_url;
+      const texto = typeof item.texto === 'string' ? item.texto.trim() : '';
+      const liked = !!item.user_liked;
+      const likeColor = liked ? '#e05c5c' : '';
+      const likedFill = liked ? '#e05c5c' : 'none';
+
+      return `
+        <article style="background:#fff;border-radius:12px;padding:1.5rem;border:1px solid #e5e7eb;display:flex;flex-direction:column;gap:.85rem;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <div style="width:40px;height:40px;min-width:40px;border-radius:50%;background:#f5f0e8;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9aabb8" stroke-width="1.5">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div>
+              <p style="font-weight:600;font-size:.95rem;color:#0d2240;margin:0">${esc(familia)}</p>
+              <time style="font-size:.8rem;color:#6b7280;display:block">${esc(fecha)}</time>
+            </div>
+          </div>
+          ${tieneImagen ? `<img style="width:100%;aspect-ratio:4/3;border-radius:8px;object-fit:cover;background:#e5dfd5" src="${esc(String(item.imagen_url))}" alt="Foto de ${esc(familia)}" loading="lazy" />` : ''}
+          ${texto ? `<p style="font-size:.9rem;color:#374151;line-height:1.6;flex:1;margin:0">${esc(texto)}</p>` : ''}
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:0" />
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <button class="js-like-btn" data-id="${esc(String(item.id || ''))}" data-liked="${liked}"
+              style="display:flex;align-items:center;gap:.4rem;font-size:.88rem;color:${likeColor};background:none;border:none;cursor:pointer;font-family:inherit;transition:color .2s"
+              aria-label="${likes} me gusta">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="${likedFill}" stroke="${liked ? '#e05c5c' : 'currentColor'}" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              <span class="like-count">${likes}</span>
+            </button>
+            <span style="font-size:.8rem;padding:.2rem .7rem;border:1px solid #e5e7eb;border-radius:100px;color:#6b7280">${esc(tipo)}</span>
+          </div>
+        </article>`;
+    }
+
+    async function refreshFamilias() {
+      try {
+        const token = localStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await fetch(`${apiUrl}/galeria?limit=3`, { cache: 'no-store', headers });
+        if (!res.ok) return;
+        const payload = await res.json();
+        const data = Array.isArray(payload) ? payload : (payload.data || []);
+
+        const section = document.getElementById('galeria');
+        if (!section) return;
+
+        let grid = document.getElementById('familiasGrid');
+        let empty = document.getElementById('familiasEmpty');
+
+        if (data.length === 0) {
+          if (grid) grid.remove();
+          if (!empty) {
+            const div = document.createElement('div');
+            div.id = 'familiasEmpty';
+            div.className = 'empty-familias';
+            div.innerHTML = '<p>Aún no hay testimonios publicados.</p>';
+            section.querySelector('.container')?.appendChild(div);
+          }
+          return;
+        }
+
+        if (empty) empty.remove();
+
+        if (!grid) {
+          grid = document.createElement('div');
+          grid.id = 'familiasGrid';
+          grid.className = 'familias-grid';
+          section.querySelector('.container')?.appendChild(grid);
+        }
+
+        grid.innerHTML = data.map(buildCard).join('');
+      } catch (_) {}
+    }
+
+    window.addEventListener('community:uploaded', (e) => {
+      const mode = /** @type {any} */ (e).detail?.mode;
+      if (mode === 'foto' || mode === 'comentario') refreshFamilias();
+    });
+
+    // Sincronizar estado de likes al cargar la página.
+    document.addEventListener('DOMContentLoaded', () => refreshFamilias());
+
+    // ── Like handler ─────────────────────────────────────────────────────────
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.js-like-btn');
+      if (!btn) return;
+
+      const id = btn.getAttribute('data-id');
+      if (!id) return;
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        const modal = document.getElementById('loginModalOverlay');
+        if (modal) {
+          modal.classList.add('active');
+          const titleEl = document.getElementById('modalTitle');
+          const msgEl   = document.getElementById('modalMessage');
+          if (titleEl) titleEl.textContent = 'Iniciar sesión';
+          if (msgEl)   msgEl.textContent   = 'Debes iniciar sesión para dar me gusta.';
+        }
+        return;
+      }
+
+      const wasLiked  = btn.getAttribute('data-liked') === 'true';
+      const countSpan = btn.querySelector('.like-count');
+      const currCount = parseInt(countSpan?.textContent || '0', 10);
+
+      // Optimistic update
+      const newLiked = !wasLiked;
+      const applyLikeUI = (liked, count) => {
+        btn.setAttribute('data-liked', String(liked));
+        btn.style.color = liked ? '#e05c5c' : '#6b7280';
+        const svg = btn.querySelector('svg');
+        if (svg) {
+          svg.setAttribute('fill', liked ? '#e05c5c' : 'none');
+          svg.setAttribute('stroke', liked ? '#e05c5c' : 'currentColor');
+        }
+        if (countSpan) countSpan.textContent = String(count);
+      };
+
+      applyLikeUI(newLiked, currCount + (newLiked ? 1 : -1));
+
+      try {
+        const res = await fetch(`${apiUrl}/galeria/${encodeURIComponent(id)}/like`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) throw new Error('error');
+        const data = await res.json();
+
+        // Sync with server truth — no cambia el count pq ya lo actualizamos
+        applyLikeUI(data.liked, parseInt(countSpan?.textContent || '0', 10));
+      } catch (_) {
+        // Revert on failure
+        applyLikeUI(wasLiked, currCount);
+      }
+    });
+  })();
+</script>
+
+<style>
+  .familias-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .section-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .upload-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .upload-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-white);
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+
+  .upload-btn:hover {
+    border-color: var(--color-navy);
+    color: var(--color-navy);
+  }
+
+  .familia-card {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .familia-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .familia-avatar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    background: var(--color-cream);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .familia-nombre {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--color-navy);
+  }
+
+  .familia-fecha {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    display: block;
+  }
+
+  .familia-img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: var(--color-cream-dark);
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+  }
+
+  .familia-texto {
+    font-size: 0.9rem;
+    color: var(--color-text);
+    line-height: 1.6;
+    flex: 1;
+  }
+
+  .familia-divider {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 0;
+  }
+
+  .familia-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .familia-like {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.88rem;
+    color: var(--color-text-muted);
+    transition: color 0.2s;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: var(--font-sans);
+  }
+
+  .familia-like:hover {
+    color: #e05c5c;
+  }
+
+  .familia-tipo {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 768px) {
+    .familias-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .section-actions,
+    .upload-actions {
+      justify-content: flex-start;
+    }
+  }
+
+  .empty-familias {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+</style>

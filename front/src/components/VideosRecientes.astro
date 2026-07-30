@@ -1,0 +1,485 @@
+---
+const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
+
+let videos: any[] = [];
+try {
+  const res = await fetch(`${API_URL}/videos?limit=3`);
+  if (res.ok) {
+    const payload = await res.json();
+    const data = Array.isArray(payload) ? payload : (payload.data || []);
+    videos = data.map((video: any) => ({
+      titulo: video.titulo,
+      autor: video.autor_nombre || 'Anónimo',
+      duracion: video.duracion || '00:00',
+      vistas: Number(video.vistas || 0),
+      slug: video.slug,
+      gradiente: video.gradiente || 'linear-gradient(135deg, #1565C0 0%, #42A5F5 100%)',
+      emoji: video.emoji || '🎬',
+      url: video.url || '',
+    }));
+  }
+} catch (error) {
+  console.error('Error al obtener videos recientes:', error);
+}
+---
+
+<section class="section" id="videos" data-api={API_URL}>
+  <div class="container">
+    <div class="section-header section-header-row">
+      <div class="section-header">
+        <h2>Videos Recientes</h2>
+        <p>Recursos audiovisuales para la devoción familiar</p>
+      </div>
+      <div class="section-actions">
+        <a href="/galeria" class="ver-mas">Ver galería →</a>
+        <div class="upload-actions" aria-label="Acciones para publicar en comunidad">
+          <button type="button" class="upload-btn js-open-upload" data-upload-type="video">Subir video</button>
+          <button type="button" class="upload-btn js-open-upload" data-upload-type="foto">Subir foto</button>
+          <button type="button" class="upload-btn js-open-upload" data-upload-type="comentario">Compartir comentario</button>
+        </div>
+      </div>
+    </div>
+
+    {videos.length > 0 ? (
+    <div class="videos-grid" id="videosGrid">
+      {videos.map((video) => (
+        <article class="video-card">
+          <button
+            type="button"
+            class="video-card-link"
+            aria-label={`Reproducir: ${video.titulo}`}
+            data-video-url={video.url}
+            data-video-titulo={video.titulo}
+            data-video-autor={video.autor}
+            data-video-slug={video.slug}
+          >
+            <div class="video-thumb" style={`background: ${video.gradiente}`} aria-hidden="true">
+              <span class="video-emoji">{video.emoji}</span>
+              <span class="video-duration">{video.duracion}</span>
+              <div class="video-play">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </div>
+            </div>
+            <div class="video-info">
+              <h3 class="video-titulo">{video.titulo}</h3>
+              <div class="video-meta">
+                <span class="video-autor">{video.autor}</span>
+                <div class="video-vistas">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  {video.vistas.toLocaleString('es')}
+                </div>
+              </div>
+            </div>
+          </button>
+        </article>
+      ))}
+    </div>
+    ) : (
+      <div class="empty-videos" id="videosEmpty">
+        <p>Aún no hay videos publicados.</p>
+      </div>
+    )}
+  </div>
+</section>
+
+<script>
+  // @ts-nocheck
+  (() => {
+    const section = document.getElementById('videos');
+    const apiUrl = section?.getAttribute('data-api') || 'http://localhost:3000/api';
+    const GRADIENTES = [
+      'linear-gradient(135deg,#1565C0,#42A5F5)',
+      'linear-gradient(135deg,#B71C1C,#EF9A9A)',
+      'linear-gradient(135deg,#1B5E20,#81C784)',
+      'linear-gradient(135deg,#F9A825,#FFF176)',
+      'linear-gradient(135deg,#4527A0,#B39DDB)',
+    ];
+
+    function esc(str: unknown): string {
+      return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // @ts-ignore
+    function buildCard(video) {
+      const gradiente = video.gradiente || GRADIENTES[Math.floor(Math.random() * GRADIENTES.length)];
+      const duracion = video.duracion ? `<span style="position:absolute;bottom:.6rem;right:.6rem;background:rgba(0,0,0,.75);color:#fff;font-size:.78rem;font-weight:600;padding:.2rem .5rem;border-radius:4px">${esc(video.duracion)}</span>` : '';
+      return `
+        <article class="video-card" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1);border:1px solid #e5e7eb;transition:box-shadow .25s,transform .25s">
+          <button type="button" class="video-card-link"
+            style="display:flex;flex-direction:column;width:100%;background:none;border:none;cursor:pointer;text-align:left;padding:0"
+            aria-label="Reproducir: ${esc(video.titulo)}"
+            data-video-url="${esc(video.url)}"
+            data-video-titulo="${esc(video.titulo)}"
+            data-video-autor="${esc(video.autor_nombre || 'Anónimo')}"
+            data-video-slug="${esc(video.slug)}">
+            <div class="video-thumb" style="position:relative;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;background:${esc(gradiente)};overflow:hidden">
+              <span style="font-size:2.5rem;opacity:.45;pointer-events:none">${esc(video.emoji || '🎬')}</span>
+              ${duracion}
+              <div style="position:absolute;width:48px;height:48px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s" class="video-play">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="#0d2240"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+            <div style="padding:1rem;display:flex;flex-direction:column;gap:.5rem">
+              <h3 style="font-size:1rem;font-weight:700;color:#0d2240;line-height:1.3;margin:0">${esc(video.titulo)}</h3>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:.85rem;color:#6b7280">
+                <span>${esc(video.autor_nombre || 'Anónimo')}</span>
+                <span style="display:flex;align-items:center;gap:.3rem">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  ${Number(video.vistas || 0).toLocaleString('es')}
+                </span>
+              </div>
+            </div>
+          </button>
+        </article>`;
+    }
+
+    async function refreshVideos() {
+      try {
+        const res = await fetch(`${apiUrl}/videos?limit=3`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const payload = await res.json();
+        const data = Array.isArray(payload) ? payload : (payload.data || []);
+
+        const section = document.getElementById('videos');
+        if (!section) return;
+
+        let grid = document.getElementById('videosGrid');
+        let empty = document.getElementById('videosEmpty');
+
+        if (data.length === 0) {
+          if (grid) grid.remove();
+          if (!empty) {
+            const div = document.createElement('div');
+            div.id = 'videosEmpty';
+            div.className = 'empty-videos';
+            div.innerHTML = '<p>Aún no hay videos publicados.</p>';
+            section.querySelector('.container')?.appendChild(div);
+          }
+          return;
+        }
+
+        if (empty) empty.remove();
+
+        if (!grid) {
+          grid = document.createElement('div');
+          grid.id = 'videosGrid';
+          grid.className = 'videos-grid';
+          section.querySelector('.container')?.appendChild(grid);
+        }
+
+        grid.innerHTML = data.map(buildCard).join('');
+      } catch (_) {}
+    }
+
+    window.addEventListener('community:uploaded', (e) => {
+      // @ts-ignore
+      const mode = e.detail?.mode;
+      if (mode === 'video') refreshVideos();
+    });
+  })();
+</script>
+
+<style is:global>
+  #videos .videos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  #videos .video-card {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+    transition: box-shadow 0.25s, transform 0.25s;
+  }
+
+  #videos .video-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+  }
+
+  #videos .video-card:hover .video-play {
+    opacity: 1;
+  }
+
+  #videos .video-card-link {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+  }
+
+  #videos .video-thumb {
+    position: relative; aspect-ratio: 16/9;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #videos .video-emoji {
+    font-size: 2.5rem; opacity: 0.5; pointer-events: none;
+  }
+
+  #videos .video-duration {
+    position: absolute;
+    bottom: 0.6rem;
+    right: 0.6rem;
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  #videos .video-play {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-navy);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  #videos .video-info {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  #videos .video-titulo {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    line-height: 1.3;
+  }
+
+  #videos .video-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  #videos .video-vistas {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  #videos .section-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  #videos .upload-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  #videos .upload-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-white);
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+
+  #videos .upload-btn:hover {
+    border-color: var(--color-navy);
+    color: var(--color-navy);
+  }
+
+  @media (max-width: 768px) {
+    #videos .videos-grid {
+      grid-template-columns: 1fr;
+    }
+
+    #videos .section-actions,
+    #videos .upload-actions {
+      justify-content: flex-start;
+    }
+  }
+
+  #videos .empty-videos {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+</style>
+
+<!-- Modal de reproducción de video -->
+<div id="videoPlayerModal" style="display:none;" class="vplayer-overlay" aria-hidden="true">
+  <div class="vplayer-backdrop" id="vplayerBackdrop"></div>
+  <div class="vplayer-card" role="dialog" aria-modal="true" aria-label="Reproductor de video">
+    <div class="vplayer-header">
+      <div>
+        <p class="vplayer-titulo" id="vplayerTitulo"></p>
+        <p class="vplayer-autor" id="vplayerAutor"></p>
+      </div>
+      <button type="button" class="vplayer-close" id="vplayerClose" aria-label="Cerrar">×</button>
+    </div>
+    <video id="vplayerVideo" class="vplayer-video" controls playsinline preload="metadata">
+      Tu navegador no soporta la reproducción de video.
+    </video>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const modal    = document.getElementById('videoPlayerModal');
+    const backdrop = document.getElementById('vplayerBackdrop');
+    const closeBtn = document.getElementById('vplayerClose');
+    const videoEl  = document.getElementById('vplayerVideo') as HTMLVideoElement | null;
+    const tituloEl = document.getElementById('vplayerTitulo');
+    const autorEl  = document.getElementById('vplayerAutor');
+    const API_URL  = (document.querySelector('meta[name="api-url"]') as HTMLMetaElement | null)?.content
+                      || 'http://localhost:3000/api';
+
+    function openPlayer(url: string, titulo: string, autor: string, slug: string) {
+      if (!modal || !videoEl) return;
+      videoEl.src = url;
+      if (tituloEl) tituloEl.textContent = titulo || '';
+      if (autorEl)  autorEl.textContent  = autor  || '';
+      modal.style.display = 'grid';
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      videoEl.play().catch(() => {});
+      // Registrar vista (fire-and-forget).
+      if (slug) fetch(`${API_URL}/videos/${encodeURIComponent(slug)}`).catch(() => {});
+    }
+
+    function closePlayer() {
+      if (!modal || !videoEl) return;
+      videoEl.pause();
+      videoEl.src = '';
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target instanceof Element ? e.target.closest('[data-video-url]') : null;
+      if (btn) {
+        const url    = btn.getAttribute('data-video-url')    || '';
+        const titulo = btn.getAttribute('data-video-titulo') || '';
+        const autor  = btn.getAttribute('data-video-autor')  || '';
+        const slug   = btn.getAttribute('data-video-slug')   || '';
+        if (url) openPlayer(url, titulo, autor, slug);
+        return;
+      }
+
+      if (e.target === backdrop || e.target === closeBtn) closePlayer();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal?.style.display !== 'none') closePlayer();
+    });
+  })();
+</script>
+
+<style>
+  .vplayer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    place-items: center;
+    padding: 1rem;
+  }
+
+  .vplayer-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    cursor: pointer;
+  }
+
+  .vplayer-card {
+    position: relative;
+    width: min(860px, calc(100vw - 2rem));
+    background: #0d1117;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  }
+
+  .vplayer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .vplayer-titulo {
+    font-weight: 700;
+    color: #fff;
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .vplayer-autor {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0.2rem 0 0;
+  }
+
+  .vplayer-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #fff;
+    font-size: 1.6rem;
+    line-height: 1;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .vplayer-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .vplayer-video {
+    display: block;
+    width: 100%;
+    max-height: 70vh;
+    background: #000;
+  }
+</style>

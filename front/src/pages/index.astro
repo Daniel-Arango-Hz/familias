@@ -1,0 +1,26 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import LibrosDestacados from '../components/LibrosDestacados.astro';
+import NuevasPublicaciones from '../components/NuevasPublicaciones.astro';
+import AutoresDestacados from '../components/AutoresDestacados.astro';
+import VideosRecientes from '../components/VideosRecientes.astro';
+import FamiliasParticipantes from '../components/FamiliasParticipantes.astro';
+import CommunityUploadModal from '../components/CommunityUploadModal.astro';
+import CtaFooter from '../components/CtaFooter.astro';
+---
+
+<Layout>
+  <Header />
+  <main>
+    <Hero />
+    <LibrosDestacados />
+    <NuevasPublicaciones />
+    <AutoresDestacados />
+    <VideosRecientes />
+    <FamiliasParticipantes />
+    <CommunityUploadModal />
+  </main>
+  <CtaFooter />
+</Layout>
