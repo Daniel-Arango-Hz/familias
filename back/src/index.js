@@ -59,6 +59,11 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Error interno del servidor' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 [ACTUALIZADO] FamiliaLee API corriendo en http://localhost:${PORT}`);
-});
+// Escuchar solo en desarrollo local (Vercel inyecta VERCEL=1)
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`🚀 FamiliaLee API corriendo en http://localhost:${PORT}`);
+  });
+}
+
+export default app;
