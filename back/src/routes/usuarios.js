@@ -66,14 +66,42 @@ router.patch(
 
 // ─── GET /usuarios/guardados ──────────────────────────────────────────────────
 router.get('/guardados', requireAuth, async (req, res) => {
-  const { data, error } = await supabase
+  const { data: guardados, error: guardadosError } = await supabase
     .from('guardados')
-    .select('libro:libros_completos(*), created_at')
+    .select('libro_id, created_at')
     .eq('usuario_id', req.user.id)
     .order('created_at', { ascending: false });
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data.map((g) => g.libro));
+  if (guardadosError) return res.status(500).json({ error: guardadosError.message });
+
+  if (!guardados?.length) {
+    return res.json([]);
+  }
+
+  const libroIds = guardados.map((g) => g.libro_id);
+
+  const { data: libros, error: librosError } = await supabase
+    .from('libros_completos')
+    .select('*')
+    .in('id', libroIds);
+
+  if (librosError) return res.status(500).json({ error: librosError.message });
+
+  const librosById = new Map(
+    (libros || []).map((libro) => [
+      libro.id,
+      {
+        ...libro,
+        portada_icono: normalizeCoverIcon(libro.portada_icono),
+      },
+    ])
+  );
+
+  const orderedLibros = guardados
+    .map((g) => librosById.get(g.libro_id))
+    .filter(Boolean);
+
+  res.json(orderedLibros);
 });
 
 // ─── GET /usuarios/publicaciones ─────────────────────────────────────────────
