@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { supabase } from '../config/supabase.js';
+import { supabase, supabaseAdmin } from '../config/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 
@@ -66,7 +66,7 @@ router.patch(
 
 // ─── GET /usuarios/guardados ──────────────────────────────────────────────────
 router.get('/guardados', requireAuth, async (req, res) => {
-  const { data: guardados, error: guardadosError } = await supabase
+  const { data: guardados, error: guardadosError } = await supabaseAdmin
     .from('guardados')
     .select('libro_id, created_at')
     .eq('usuario_id', req.user.id)
@@ -80,7 +80,7 @@ router.get('/guardados', requireAuth, async (req, res) => {
 
   const libroIds = guardados.map((g) => g.libro_id);
 
-  const { data: libros, error: librosError } = await supabase
+  const { data: libros, error: librosError } = await supabaseAdmin
     .from('libros_completos')
     .select('*')
     .in('id', libroIds);
@@ -106,7 +106,7 @@ router.get('/guardados', requireAuth, async (req, res) => {
 
 // ─── GET /usuarios/publicaciones ─────────────────────────────────────────────
 router.get('/publicaciones', requireAuth, async (req, res) => {
-  const { data: autor, error: autorError } = await supabase
+  const { data: autor, error: autorError } = await supabaseAdmin
     .from('autores')
     .select('id')
     .eq('usuario_id', req.user.id)
@@ -115,7 +115,7 @@ router.get('/publicaciones', requireAuth, async (req, res) => {
   if (autorError) return res.status(500).json({ error: autorError.message });
   if (!autor?.id) return res.json([]);
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('libros_completos')
     .select('*')
     .eq('autor_id', autor.id)
@@ -133,7 +133,7 @@ router.get('/publicaciones', requireAuth, async (req, res) => {
 
 // ─── GET /usuarios/descargas ──────────────────────────────────────────────────
 router.get('/descargas', requireAuth, async (req, res) => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('descargas')
     .select('libro:libros_completos(*), created_at')
     .eq('usuario_id', req.user.id)
