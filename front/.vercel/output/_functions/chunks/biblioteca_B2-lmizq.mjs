@@ -4,7 +4,7 @@ import { t as createComponent } from "./compiler_uhih2xtZ.mjs";
 import { t as $$Layout } from "./Layout_BUTokUE6.mjs";
 import { t as $$Header } from "./Header_B7zC4OBp.mjs";
 import { t as $$CtaFooter } from "./CtaFooter_B0R3zWUg.mjs";
-import { n as obtenerLibros } from "./api_DJZU8zp9.mjs";
+import { n as obtenerLibros } from "./api_D4c-A64j.mjs";
 import { t as $$BookCard } from "./BookCard_CU2I_Mhr.mjs";
 //#region src/pages/biblioteca.astro
 var biblioteca_exports = /* @__PURE__ */ __exportAll({

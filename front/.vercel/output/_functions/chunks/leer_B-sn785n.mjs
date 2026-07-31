@@ -11,7 +11,7 @@ var leer_exports = /* @__PURE__ */ __exportAll({
 });
 createAstro("https://astro.build");
 async function getStaticPaths() {
-	const API_URL = "http://localhost:3000/api";
+	const API_URL = "https://familias.vercel.app/api";
 	try {
 		const res = await fetch(`${API_URL}/libros?limit=1000`);
 		if (!res.ok) return [];
@@ -30,7 +30,7 @@ var $$Leer = createComponent(async ($$result, $$props, $$slots) => {
 		"description": `Lee en línea gratuitamente.`
 	}, { "default": ($$result2) => renderTemplate`${maybeRenderHead($$result2)}<div id="loading-spinner" class="loading-spinner"><div class="spinner"></div><p>Cargando libro...</p></div><div id="error-container" class="error-container" style="display: none;"><p>No se pudo cargar el libro.</p><a href="/biblioteca">Volver a la biblioteca</a></div><div id="reader-container" style="display: none;"><!-- Barra de lectura --><div class="reader-bar"><div class="reader-bar-inner"><a${addAttribute(`/libro/${slug}`, "href")} class="reader-back" aria-label="Volver al libro"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"></path></svg><span>Volver</span></a><div class="reader-book-info"><div class="reader-cover-mini" aria-hidden="true">📖</div><div><p class="reader-titulo" id="reader-titulo">Cargando...</p><p class="reader-autor" id="reader-autor">...</p></div></div><div class="reader-bar-actions"><button class="reader-btn" id="btn-font-down" aria-label="Reducir tamaño de texto" title="Texto más pequeño">A−</button><button class="reader-btn" id="btn-font-up" aria-label="Aumentar tamaño de texto" title="Texto más grande">A+</button><button class="reader-btn" id="btn-theme" aria-label="Cambiar tema" title="Cambiar tema"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg></button><a id="btn-download" href="#" class="reader-btn reader-btn-dl" title="Ir al libro"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></a></div></div><!-- Barra de progreso --><div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width: 0%"></div></div></div><main class="reader-main" id="reader-main"><!-- Índice lateral --><aside class="reader-toc" aria-label="Tabla de contenidos"><h2 class="toc-title">Contenido</h2><ol class="toc-list" id="toc-list"><li><button class="toc-link" disabled>Cargando...</button></li></ol></aside><!-- Área de lectura --><article class="reader-content" id="reader-content" aria-live="polite"><!-- Las páginas se cargan aquí con JavaScript --></article></main></div>` })}<script>(function(){${defineScriptVars({
 		slug,
-		apiUrl: "http://localhost:3000/api"
+		apiUrl: "https://familias.vercel.app/api"
 	})}
   const API_URL = apiUrl;
   let libro = null;

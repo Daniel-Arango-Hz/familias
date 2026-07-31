@@ -1,7 +1,7 @@
 import { t as __exportAll } from "./rolldown-runtime_D7D4PA-g.mjs";
 //#region src/pages/api/guardar.ts
 var guardar_exports = /* @__PURE__ */ __exportAll({ POST: () => POST });
-var API_URL = "http://localhost:3000/api";
+var API_URL = "https://familias.vercel.app/api";
 async function fetchGuardadoState(libroSlug, token) {
 	const verifyRes = await fetch(`${API_URL}/libros/${libroSlug}`, {
 		method: "GET",

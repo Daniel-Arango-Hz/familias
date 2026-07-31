@@ -5,7 +5,7 @@ import { t as renderScript } from "./script_VLZeParw.mjs";
 import { t as $$Layout } from "./Layout_BUTokUE6.mjs";
 import { t as $$Header } from "./Header_B7zC4OBp.mjs";
 import { t as $$CtaFooter } from "./CtaFooter_B0R3zWUg.mjs";
-import { n as obtenerLibros, t as obtenerAutores } from "./api_DJZU8zp9.mjs";
+import { n as obtenerLibros, t as obtenerAutores } from "./api_D4c-A64j.mjs";
 import { t as $$BookCard } from "./BookCard_CU2I_Mhr.mjs";
 //#region src/components/Hero.astro
 var $$Hero = createComponent(($$result, $$props, $$slots) => {
@@ -111,7 +111,7 @@ var $$AutoresDestacados = createComponent(async ($$result, $$props, $$slots) => 
 //#endregion
 //#region src/components/VideosRecientes.astro
 var $$VideosRecientes = createComponent(async ($$result, $$props, $$slots) => {
-	const API_URL = "/api";
+	const API_URL = "https://familias.vercel.app/api";
 	let videos = [];
 	try {
 		const res = await fetch(`${API_URL}/videos?limit=3`);
@@ -136,7 +136,7 @@ var $$VideosRecientes = createComponent(async ($$result, $$props, $$slots) => {
 //#endregion
 //#region src/components/FamiliasParticipantes.astro
 var $$FamiliasParticipantes = createComponent(async ($$result, $$props, $$slots) => {
-	const API_URL = "http://localhost:3000/api";
+	const API_URL = "https://familias.vercel.app/api";
 	function formatFecha(raw) {
 		if (!raw) return "Sin fecha";
 		const d = new Date(raw);
@@ -171,7 +171,7 @@ var $$FamiliasParticipantes = createComponent(async ($$result, $$props, $$slots)
 //#endregion
 //#region src/components/CommunityUploadModal.astro
 var $$CommunityUploadModal = createComponent(($$result, $$props, $$slots) => {
-	return renderTemplate`${maybeRenderHead($$result)}<div id="communityUploadModal" class="upload-modal" hidden aria-hidden="true" data-astro-cid-xqxsfxgt><div class="upload-modal-backdrop" data-close-upload-modal data-astro-cid-xqxsfxgt></div><div class="upload-modal-card" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle" data-astro-cid-xqxsfxgt><button type="button" class="upload-modal-close" data-close-upload-modal aria-label="Cerrar" data-astro-cid-xqxsfxgt>×</button><h3 id="uploadModalTitle" class="upload-modal-title" data-astro-cid-xqxsfxgt>Compartir con la comunidad</h3><p class="upload-modal-subtitle" id="uploadModalSubtitle" data-astro-cid-xqxsfxgt>Elige qué deseas publicar.</p><form id="communityUploadForm" class="upload-modal-form" data-astro-cid-xqxsfxgt><input type="hidden" id="uploadMode" value="comentario" data-astro-cid-xqxsfxgt><label class="upload-field" id="fieldFamilia" data-astro-cid-xqxsfxgt><span data-astro-cid-xqxsfxgt>Nombre de familia</span><input id="nombreFamiliaInput" type="text" maxlength="120" placeholder="Ej: Familia Gómez" required data-astro-cid-xqxsfxgt></label><label class="upload-field" id="fieldTitulo" hidden data-astro-cid-xqxsfxgt><span data-astro-cid-xqxsfxgt>Título del video</span><input id="tituloInput" type="text" maxlength="180" placeholder="Ej: Devocional en casa" data-astro-cid-xqxsfxgt></label><label class="upload-field" id="fieldCategoria" hidden data-astro-cid-xqxsfxgt><span data-astro-cid-xqxsfxgt>Categoría</span><input id="categoriaInput" type="text" maxlength="80" placeholder="Ej: Devoción" data-astro-cid-xqxsfxgt></label><label class="upload-field" id="fieldComentario" data-astro-cid-xqxsfxgt><span data-astro-cid-xqxsfxgt>Comentario</span><textarea id="comentarioInput" rows="4" maxlength="2000" placeholder="Comparte tu experiencia..." required data-astro-cid-xqxsfxgt></textarea></label><label class="upload-field" id="fieldArchivo" hidden data-astro-cid-xqxsfxgt><span id="archivoLabel" data-astro-cid-xqxsfxgt>Archivo</span><input id="archivoInput" type="file" data-astro-cid-xqxsfxgt><small id="archivoHelp" data-astro-cid-xqxsfxgt>Selecciona un archivo.</small></label><p class="upload-modal-status" id="uploadModalStatus" role="status" aria-live="polite" data-astro-cid-xqxsfxgt></p><div class="upload-modal-actions" data-astro-cid-xqxsfxgt><button type="button" class="btn-secondary" data-close-upload-modal data-astro-cid-xqxsfxgt>Cancelar</button><button type="submit" class="btn-primary" id="uploadSubmitBtn" data-astro-cid-xqxsfxgt>Enviar</button></div></form></div></div><script>(function(){${defineScriptVars({ apiUrl: "http://localhost:3000/api" })}
+	return renderTemplate`${maybeRenderHead($$result)}<div id="communityUploadModal" class="upload-modal" hidden aria-hidden="true" data-astro-cid-xqxsfxgt><div class="upload-modal-backdrop" data-close-upload-modal data-astro-cid-xqxsfxgt></div><div class="upload-modal-card" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle" data-astro-cid-xqxsfxgt><button type="button" class="upload-modal-close" data-close-upload-modal aria-label="Cerrar" data-astro-cid-xqxsfxgt>×</button><h3 id="uploadModalTitle" class="upload-modal-title" data-astro-cid-xqxsfxgt>Compartir con la comunidad</h3><p class="upload-modal-subtitle" id="uploadModalSubtitle" data-astro-cid-xqxsfxgt>Elige qué deseas publicar.</p><form id="communityUploadForm" class="upload-modal-form" data-astro-cid-xqxsfxgt><input type="hidden" id="uploadMode" value="comentario" data-astro-cid-xqxsfxgt><label class="upload-field" id="fieldFamilia" data-astro-cid-xqxsfxgt><span data-astro-cid-xqxsfxgt>Nombre de familia</span><input id="nombreFamiliaInput" type="text" maxlength="120" placeholder="Ej: Familia Gómez" required data-astro-cid-xqxsfxgt></label><label class="upload-field" id="fieldTitulo" hidden data-astro-cid-xqxsfxgt><span data-astro-cid-xqxsfxgt>Título del video</span><input id="tituloInput" type="text" maxlength="180" placeholder="Ej: Devocional en casa" data-astro-cid-xqxsfxgt></label><label class="upload-field" id="fieldCategoria" hidden data-astro-cid-xqxsfxgt><span data-astro-cid-xqxsfxgt>Categoría</span><input id="categoriaInput" type="text" maxlength="80" placeholder="Ej: Devoción" data-astro-cid-xqxsfxgt></label><label class="upload-field" id="fieldComentario" data-astro-cid-xqxsfxgt><span data-astro-cid-xqxsfxgt>Comentario</span><textarea id="comentarioInput" rows="4" maxlength="2000" placeholder="Comparte tu experiencia..." required data-astro-cid-xqxsfxgt></textarea></label><label class="upload-field" id="fieldArchivo" hidden data-astro-cid-xqxsfxgt><span id="archivoLabel" data-astro-cid-xqxsfxgt>Archivo</span><input id="archivoInput" type="file" data-astro-cid-xqxsfxgt><small id="archivoHelp" data-astro-cid-xqxsfxgt>Selecciona un archivo.</small></label><p class="upload-modal-status" id="uploadModalStatus" role="status" aria-live="polite" data-astro-cid-xqxsfxgt></p><div class="upload-modal-actions" data-astro-cid-xqxsfxgt><button type="button" class="btn-secondary" data-close-upload-modal data-astro-cid-xqxsfxgt>Cancelar</button><button type="submit" class="btn-primary" id="uploadSubmitBtn" data-astro-cid-xqxsfxgt>Enviar</button></div></form></div></div><script>(function(){${defineScriptVars({ apiUrl: "https://familias.vercel.app/api" })}
   (() => {
     const modal = document.getElementById('communityUploadModal');
     if (!modal) return;

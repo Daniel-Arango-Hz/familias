@@ -1,7 +1,7 @@
 import { t as __exportAll } from "./rolldown-runtime_D7D4PA-g.mjs";
 //#region src/pages/api/autor/[slug].ts
 var _slug__exports = /* @__PURE__ */ __exportAll({ GET: () => GET });
-var API_URL = "http://localhost:3000/api";
+var API_URL = "https://familias.vercel.app/api";
 async function GET({ params, request }) {
 	const { slug } = params;
 	const authHeader = request.headers.get("Authorization");

@@ -4,7 +4,7 @@ import { t as createComponent } from "./compiler_uhih2xtZ.mjs";
 import { t as $$Layout } from "./Layout_BUTokUE6.mjs";
 import { t as $$Header } from "./Header_B7zC4OBp.mjs";
 import { t as $$CtaFooter } from "./CtaFooter_B0R3zWUg.mjs";
-import { t as obtenerAutores } from "./api_DJZU8zp9.mjs";
+import { t as obtenerAutores } from "./api_D4c-A64j.mjs";
 //#region src/pages/autores.astro
 var autores_exports = /* @__PURE__ */ __exportAll({
 	default: () => $$Autores,

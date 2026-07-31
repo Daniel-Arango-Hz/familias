@@ -15,7 +15,7 @@ createAstro("https://astro.build");
 var $$Galeria = createComponent(async ($$result, $$props, $$slots) => {
 	const Astro2 = $$result.createAstro($$props, $$slots);
 	Astro2.self = $$Galeria;
-	const API_URL = "/api";
+	const API_URL = "https://familias.vercel.app/api";
 	const filtros = [
 		"Videos",
 		"Imágenes",
