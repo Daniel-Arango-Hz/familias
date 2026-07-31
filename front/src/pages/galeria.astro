@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import CtaFooter from '../components/CtaFooter.astro';
 
-const API_URL = import.meta.env.PUBLIC_API_URL || import.meta.env.API_URL || '/api';
+const API_URL =import.meta.env.PUBLIC_API_URL || `${Astro.url.origin}/api`;
 const filtros = ['Videos', 'Imágenes', 'Testimonios'];
 const filtro = Astro.url.searchParams.get('filtro') || 'Videos';
 
