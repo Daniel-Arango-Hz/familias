@@ -10,8 +10,13 @@ const navLinks = [
 <header class="header">
   <div class="container header-inner">
     <a href="/" class="logo" aria-label="FamiliaLee inicio">
-      <div class="logo-emoji">📚</div>
-      <span class="logo-text">FamiliaLee</span>
+      <div class="logo-image">
+          <img src="/logos/logo.png" alt="CBI Personitas Biblioteca" />
+      </div>
+      <span class="logo-text">
+         <span class="logo-line-1">CBI Personitas</span>
+  <span class="logo-line-2">Biblioteca</span>
+      </span>
     </a>
 
     <nav class="nav" aria-label="Navegación principal">
@@ -115,16 +120,50 @@ const navLinks = [
     display: flex;
     align-items: center;
   }
+.logo-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 
+.logo-image img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
   .logo-text {
-    font-family: var(--font-serif);
-    font-size: 1.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--color-navy-light), var(--color-primary-pink), var(--color-primary-blue));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1;
+  user-select: none;
   }
+  .logo-line-1,
+.logo-line-2 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  background: linear-gradient(
+    135deg,
+    var(--color-navy-light),
+    var(--color-primary-pink),
+    var(--color-primary-blue)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.logo-line-1 {
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+}
+
+.logo-line-2 {
+  font-size: 1.55rem;
+  letter-spacing: 0.08em;
+  margin-top: 0.15rem;
+}
 
   .nav {
     flex: 1;

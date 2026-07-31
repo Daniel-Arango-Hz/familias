@@ -1,0 +1,407 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="generator" content="Astro v7.1.4"><meta name="description" content="ff"><title>fre – FamiliaLee</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/_astro/CtaFooter.7D3p66zQ.css"><link rel="stylesheet" href="/_astro/_slug_.CntYdCEv.css"></head><body><div class="login-modal-overlay" id="loginModalOverlay" data-astro-cid-xbhdz2uj><div class="login-modal" id="loginModal" data-astro-cid-xbhdz2uj><button class="modal-close" id="modalCloseBtn" aria-label="Cerrar modal" data-astro-cid-xbhdz2uj>✕</button><div class="modal-header" data-astro-cid-xbhdz2uj><h2 id="modalTitle" data-astro-cid-xbhdz2uj>Autenticación requerida</h2></div><div class="modal-content" data-astro-cid-xbhdz2uj><p id="modalMessage" data-astro-cid-xbhdz2uj>Por favor, inicia sesión para continuar.</p></div><div class="modal-actions" data-astro-cid-xbhdz2uj><button class="btn-secondary" id="modalCloseButton" data-astro-cid-xbhdz2uj>Cancelar</button><a href="/auth/login" class="btn-primary" data-astro-cid-xbhdz2uj>Iniciar sesión</a></div></div></div><script type="module">function e(e,t){let n=document.getElementById(`loginModalOverlay`),r=document.getElementById(`modalMessage`),i=document.getElementById(`modalTitle`);n&&r&&(t&&(i.textContent=t),r.textContent=e,n.classList.add(`active`))}function t(){let e=document.getElementById(`loginModalOverlay`);e&&e.classList.remove(`active`)}typeof window<`u`&&document.addEventListener(`DOMContentLoaded`,()=>{let e=document.getElementById(`modalCloseBtn`),t=document.getElementById(`modalCloseButton`),n=document.getElementById(`loginModalOverlay`);e?.addEventListener(`click`,()=>{n?.classList.remove(`active`)}),t?.addEventListener(`click`,()=>{n?.classList.remove(`active`)}),n?.addEventListener(`click`,e=>{e.target===n&&n.classList.remove(`active`)})});export{t as closeLoginModal,e as showLoginModal};</script><header class="header" data-astro-cid-nen7h5rs><div class="container header-inner" data-astro-cid-nen7h5rs><a href="/" class="logo" aria-label="FamiliaLee inicio" data-astro-cid-nen7h5rs><div class="logo-image" data-astro-cid-nen7h5rs><img src="/logos/logo.png" alt="CBI Personitas Biblioteca" data-astro-cid-nen7h5rs></div><span class="logo-text" data-astro-cid-nen7h5rs><span class="logo-line-1" data-astro-cid-nen7h5rs>CBI Personitas</span><span class="logo-line-2" data-astro-cid-nen7h5rs>Biblioteca</span></span></a><nav class="nav" aria-label="Navegación principal" data-astro-cid-nen7h5rs><ul class="nav-list" data-astro-cid-nen7h5rs><li data-astro-cid-nen7h5rs><a href="/#biblioteca" class="nav-link" data-astro-cid-nen7h5rs>Biblioteca</a></li><li data-astro-cid-nen7h5rs><a href="/#autores" class="nav-link" data-astro-cid-nen7h5rs>Autores</a></li><li data-astro-cid-nen7h5rs><a href="/#galeria" class="nav-link" data-astro-cid-nen7h5rs>Galería Familiar</a></li><li data-astro-cid-nen7h5rs><a href="/#recursos" class="nav-link" data-astro-cid-nen7h5rs>Recursos</a></li></ul></nav><div class="header-actions" data-astro-cid-nen7h5rs><button class="btn-icon" aria-label="Buscar" data-astro-cid-nen7h5rs><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" data-astro-cid-nen7h5rs><circle cx="11" cy="11" r="8" data-astro-cid-nen7h5rs></circle><path d="m21 21-4.35-4.35" data-astro-cid-nen7h5rs></path></svg></button><!-- Auth actions (mostrar si NO está logueado) --><div id="auth-actions" class="auth-actions" data-astro-cid-nen7h5rs><a href="/auth/login" class="btn-outline" data-astro-cid-nen7h5rs>🔑 Ingresar</a><a href="/auth/registro" class="btn-primary" data-astro-cid-nen7h5rs>✨ Registrarse ✨</a></div><!-- User menu (mostrar si está logueado) --><div id="user-menu" class="user-menu" style="display: none;" data-astro-cid-nen7h5rs><button class="profile-btn" aria-label="Menú de usuario" aria-expanded="false" data-astro-cid-nen7h5rs><div class="avatar" data-astro-cid-nen7h5rs><span id="avatar-inicial" data-astro-cid-nen7h5rs>U</span></div></button><div class="dropdown-menu" data-astro-cid-nen7h5rs><a href="/perfil" class="menu-item" data-astro-cid-nen7h5rs>👤 Mi Perfil</a><button id="logout-btn" class="menu-item logout" data-astro-cid-nen7h5rs>👋 Cerrar sesión</button></div></div></div><button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false" id="menu-toggle" data-astro-cid-nen7h5rs><span data-astro-cid-nen7h5rs></span><span data-astro-cid-nen7h5rs></span><span data-astro-cid-nen7h5rs></span></button><!-- Mobile Menu --><nav class="mobile-menu" id="mobile-menu" aria-label="Menú principal móvil" data-astro-cid-nen7h5rs><button class="mobile-menu-link mobile-search" aria-label="Buscar" data-astro-cid-nen7h5rs>🔎 Buscar</button><a href="/#biblioteca" class="mobile-menu-link" data-astro-cid-nen7h5rs>📚 Biblioteca</a><a href="/#autores" class="mobile-menu-link" data-astro-cid-nen7h5rs>✍️ Autores</a><a href="/#galeria" class="mobile-menu-link" data-astro-cid-nen7h5rs>🎨 Galería Familiar</a><a href="/#recursos" class="mobile-menu-link" data-astro-cid-nen7h5rs>📖 Recursos</a><!-- Mobile Auth Actions --><div id="mobile-auth" class="mobile-auth-buttons" data-astro-cid-nen7h5rs><a href="/auth/login" class="btn-outline" data-astro-cid-nen7h5rs>🔑 Ingresar</a><a href="/auth/registro" class="btn-primary" data-astro-cid-nen7h5rs>✨ Registrar</a></div><!-- Mobile User Menu --><div id="mobile-user-menu" style="display: none;" data-astro-cid-nen7h5rs><a href="/perfil" class="mobile-menu-link" data-astro-cid-nen7h5rs>👤 Mi Perfil</a><button id="mobile-logout-btn" class="mobile-menu-link logout" data-astro-cid-nen7h5rs>👋 Cerrar sesión</button></div></nav></div></header><script type="module" src="/_astro/Header.astro_astro_type_script_index_0_lang.M13SQM22.js"></script><main data-astro-cid-xgtkqq7i><section class="libro-hero" data-astro-cid-xgtkqq7i><div class="container" data-astro-cid-xgtkqq7i><a href="/biblioteca" class="breadcrumb" data-astro-cid-xgtkqq7i>← Volver a Biblioteca</a><div class="libro-detail" data-astro-cid-xgtkqq7i><div class="libro-cover-wrap" data-astro-cid-xgtkqq7i><div class="libro-cover" style="background: from-purple-500 to-pink-500" aria-hidden="true" data-astro-cid-xgtkqq7i><img class="cover-image" src="https://fskgaoqzitypansrtzsm.supabase.co/storage/v1/object/public/libros/portadas/cc9e6f64-851f-4706-b6ec-a5e4782e7e75/1785422967329-fre.jpg" alt="Portada de fre" loading="lazy" data-astro-cid-xgtkqq7i><span class="badge badge-nuevo" data-astro-cid-xgtkqq7i>✨ Nuevo</span></div></div><div class="libro-info" data-astro-cid-xgtkqq7i><div class="libro-tags" data-astro-cid-xgtkqq7i><span class="badge" data-astro-cid-xgtkqq7i>Drama</span></div><h1 class="libro-titulo" data-astro-cid-xgtkqq7i>fre</h1><a href="/autor/user prueba-QA2" class="libro-autor" data-astro-cid-xgtkqq7i>por <strong data-astro-cid-xgtkqq7i>user prueba QA2</strong></a><div class="libro-meta-row" data-astro-cid-xgtkqq7i><div class="star-rating" data-astro-cid-xgtkqq7i>⭐ <span id="hero-rating-promedio" data-astro-cid-xgtkqq7i>5.0</span>/5<span id="hero-rating-votos" data-astro-cid-xgtkqq7i>(1 votos)</span></div><span class="dot" data-astro-cid-xgtkqq7i>·</span><span data-astro-cid-xgtkqq7i>4-5</span><span class="dot" data-astro-cid-xgtkqq7i>·</span><span data-astro-cid-xgtkqq7i>25 páginas</span><span class="dot" data-astro-cid-xgtkqq7i>·</span><span data-astro-cid-xgtkqq7i>2026</span></div><p class="libro-desc" data-astro-cid-xgtkqq7i>ff</p><div class="libro-actions-row" data-astro-cid-ruza2g6s><button class="btn-leer-lg" id="btn-leer" data-libro-slug="fre" data-libro-titulo="fre" data-astro-cid-ruza2g6s>📖 Leer en línea</button><button class="btn-dl-lg" id="btn-descargar" data-libro-slug="fre" data-pdf-url data-astro-cid-ruza2g6s>⬇️ Descargar PDF</button><button class="btn-save-lg" id="btn-guardar" data-libro-slug="fre" aria-label="Guardar" data-astro-cid-ruza2g6s>❤️</button></div><script>(function(){const libroSlug = "fre";
+const libroTitulo = "fre";
+const apiUrl = "https://familias.vercel.app/api";
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const btnLeer = document.getElementById('btn-leer');
+    const btnDescargar = document.getElementById('btn-descargar');
+    const btnGuardar = document.getElementById('btn-guardar');
+
+    // Obtener token del localStorage
+    function getToken() {
+      return localStorage.getItem('token');
+    }
+
+    function setGuardarState(isGuardado) {
+      if (!btnGuardar) return;
+
+      if (isGuardado) {
+        btnGuardar.classList.add('guardado');
+        btnGuardar.textContent = '❤️ Guardado';
+        btnGuardar.setAttribute('aria-label', 'Quitar de guardados');
+      } else {
+        btnGuardar.classList.remove('guardado');
+        btnGuardar.textContent = '❤️ Guardar';
+        btnGuardar.setAttribute('aria-label', 'Guardar libro');
+      }
+    }
+
+    // Obtener headers con autenticación
+    function getAuthHeaders() {
+      const token = getToken();
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      return headers;
+    }
+
+    async function hydrateGuardarState() {
+      if (!btnGuardar) return;
+      const token = getToken();
+      if (!token) {
+        setGuardarState(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${apiUrl}/libros/${libroSlug}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          setGuardarState(false);
+          return;
+        }
+
+        const data = await response.json();
+        setGuardarState(Boolean(data?.guardado));
+      } catch (error) {
+        console.warn('No se pudo cargar estado de guardado:', error);
+        setGuardarState(false);
+      }
+    }
+
+    // Leer en línea
+    if (btnLeer) {
+      btnLeer.addEventListener('click', async () => {
+        window.location.href = `/libro/${libroSlug}/leer`;
+      });
+    }
+
+    // Descargar PDF
+    if (btnDescargar) {
+      btnDescargar.addEventListener('click', async () => {
+        try {
+          btnDescargar.disabled = true;
+          btnDescargar.textContent = '⏳ Descargando...';
+
+          const token = getToken();
+          if (!token) {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+              modal.classList.add('active');
+              const titleEl = document.getElementById('modalTitle');
+              const msgEl = document.getElementById('modalMessage');
+              if (titleEl) titleEl.textContent = 'Descargar libros';
+              if (msgEl) msgEl.textContent = 'Debes iniciar sesión para descargar libros. 📚';
+              btnDescargar.disabled = false;
+              btnDescargar.textContent = '⬇️ Descargar PDF';
+            }
+            return;
+          }
+
+          // Primero, registrar la descarga
+          const response = await fetch(`${apiUrl}/libros/${libroSlug}/descargar`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+          });
+
+          if (response.status === 401) {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+              modal.classList.add('active');
+              const titleEl = document.getElementById('modalTitle');
+              const msgEl = document.getElementById('modalMessage');
+              if (titleEl) titleEl.textContent = 'Sesión expirada';
+              if (msgEl) msgEl.textContent = 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo. 🔐';
+            }
+            btnDescargar.disabled = false;
+            btnDescargar.textContent = '⬇️ Descargar PDF';
+            return;
+          }
+
+          if (!response.ok) throw new Error('Error en descarga');
+
+          const data = await response.json();
+
+          // Descargar el PDF usando la URL retornada por el servidor
+          const pdfUrl = data.pdfUrl || `/api/libros/${libroSlug}/pdf`;
+          const link = document.createElement('a');
+          link.href = pdfUrl;
+          link.download = `${libroTitulo}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Actualizar contador de descargas
+          const descargasEl = document.getElementById('descargas-count');
+          if (descargasEl && data.descargas_total !== undefined) {
+            descargasEl.textContent = data.descargas_total.toLocaleString('es');
+          }
+
+          btnDescargar.textContent = '✓ Descargado';
+          setTimeout(() => {
+            btnDescargar.textContent = '⬇️ Descargar PDF';
+            btnDescargar.disabled = false;
+          }, 2000);
+        } catch (error) {
+          console.error('Error al descargar:', error);
+          const modal = document.getElementById('loginModalOverlay');
+          if (modal) {
+            modal.classList.add('active');
+            const titleEl = document.getElementById('modalTitle');
+            const msgEl = document.getElementById('modalMessage');
+            if (titleEl) titleEl.textContent = 'Error';
+            if (msgEl) msgEl.textContent = 'Error al descargar. Intenta de nuevo.';
+          }
+          btnDescargar.textContent = '⬇️ Descargar PDF';
+          btnDescargar.disabled = false;
+        }
+      });
+    }
+
+    // Guardar/Like
+    if (btnGuardar) {
+      setGuardarState(false);
+      hydrateGuardarState();
+
+      btnGuardar.addEventListener('click', async () => {
+        try {
+          const token = getToken();
+          if (!token) {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+              modal.classList.add('active');
+              const titleEl = document.getElementById('modalTitle');
+              const msgEl = document.getElementById('modalMessage');
+              if (titleEl) titleEl.textContent = 'Guardar libros';
+              if (msgEl) msgEl.textContent = 'Debes iniciar sesión para guardar libros. ❤️';
+            }
+            return;
+          }
+
+          btnGuardar.disabled = true;
+
+          const response = await fetch('/api/guardar', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ libroSlug }),
+          });
+
+          if (response.status === 401) {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+              modal.classList.add('active');
+              const titleEl = document.getElementById('modalTitle');
+              const msgEl = document.getElementById('modalMessage');
+              if (titleEl) titleEl.textContent = 'Sesión expirada';
+              if (msgEl) msgEl.textContent = 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo. 🔐';
+            }
+            btnGuardar.disabled = false;
+            return;
+          }
+
+          if (!response.ok) throw new Error('Error al guardar');
+
+          const data = await response.json();
+          setGuardarState(Boolean(data?.guardado));
+        } catch (error) {
+          console.error('Error:', error);
+          const modal = document.getElementById('loginModalOverlay');
+          if (modal) {
+            modal.classList.add('active');
+            const titleEl = document.getElementById('modalTitle');
+            const msgEl = document.getElementById('modalMessage');
+            if (titleEl) titleEl.textContent = 'Error';
+            if (msgEl) msgEl.textContent = 'Error al guardar. Intenta de nuevo.';
+          }
+        } finally {
+          if (btnGuardar) btnGuardar.disabled = false;
+        }
+      });
+    }
+  });
+})();</script><div class="book-rating-container" data-astro-cid-m2aj6sv4><div class="rating-header" data-astro-cid-m2aj6sv4><h3 data-astro-cid-m2aj6sv4>⭐ Valoración</h3><span class="rating-value" data-astro-cid-m2aj6sv4>5.0/5 (1 votos)</span></div><div class="stars-container" data-astro-cid-m2aj6sv4><div class="stars-interactive" id="stars-interactive" data-astro-cid-m2aj6sv4><button class="star-btn" data-rating="1" title="Valorar 1 estrella" aria-label="Valorar 1 estrella" data-astro-cid-m2aj6sv4>⭐</button><button class="star-btn" data-rating="2" title="Valorar 2 estrellas" aria-label="Valorar 2 estrellas" data-astro-cid-m2aj6sv4>⭐</button><button class="star-btn" data-rating="3" title="Valorar 3 estrellas" aria-label="Valorar 3 estrellas" data-astro-cid-m2aj6sv4>⭐</button><button class="star-btn" data-rating="4" title="Valorar 4 estrellas" aria-label="Valorar 4 estrellas" data-astro-cid-m2aj6sv4>⭐</button><button class="star-btn" data-rating="5" title="Valorar 5 estrellas" aria-label="Valorar 5 estrellas" data-astro-cid-m2aj6sv4>⭐</button></div><p class="rating-hint" id="rating-hint" data-astro-cid-m2aj6sv4>Haz click para valorar 🌟</p></div></div><script>(function(){const libroSlug = "fre";
+const apiUrl = "https://familias.vercel.app/api";
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const starsContainer = document.getElementById('stars-interactive');
+    const ratingHint = document.getElementById('rating-hint');
+    const starBtns = starsContainer?.querySelectorAll('.star-btn');
+
+    // Obtener token del localStorage
+    function getToken() {
+      return localStorage.getItem('token');
+    }
+
+    // Obtener headers con autenticación
+    function getAuthHeaders() {
+      const token = getToken();
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      return headers;
+    }
+
+    // Manejar hover en estrellas
+    starBtns?.forEach((btn) => {
+    btn.addEventListener('mouseenter', () => {
+      const rating = parseInt(btn.dataset.rating);
+      starBtns.forEach((b, idx) => {
+        if (idx < rating) {
+          b.style.opacity = '1';
+          b.style.color = '#ff006e';
+        } else {
+          b.style.opacity = '0.3';
+        }
+      });
+    });
+
+    btn.addEventListener('mouseleave', () => {
+      starBtns.forEach((b) => {
+        b.style.opacity = '0.5';
+        b.style.color = '';
+      });
+    });
+
+    // Click para valorar
+    btn.addEventListener('click', async () => {
+      try {
+        const token = getToken();
+        if (!token) {
+          // Mostrar modal sin importar
+          const modal = document.getElementById('loginModalOverlay');
+          if (modal) {
+            modal.classList.add('active');
+            const titleEl = document.getElementById('modalTitle');
+            const msgEl = document.getElementById('modalMessage');
+            if (titleEl) titleEl.textContent = '⭐ Valorar libros';
+            if (msgEl) msgEl.textContent = 'Debes iniciar sesión para valorar libros. ⭐';
+          }
+          return;
+        }
+
+        const rating = parseInt(btn.dataset.rating);
+        ratingHint.textContent = '⏳ Guardando valoración...';
+        ratingHint.style.color = '#b82db5';
+
+        const response = await fetch(`${apiUrl}/libros/${libroSlug}/valorar`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ 
+            puntuacion: rating,
+            calificacion: rating 
+          }),
+        });
+
+        if (response.status === 401) {
+          const modal = document.getElementById('loginModalOverlay');
+          if (modal) {
+            modal.classList.add('active');
+            const titleEl = document.getElementById('modalTitle');
+            const msgEl = document.getElementById('modalMessage');
+            if (titleEl) titleEl.textContent = 'Sesión expirada';
+            if (msgEl) msgEl.textContent = 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo. 🔐';
+          }
+          return;
+        }
+
+        if (!response.ok) throw new Error('Error al valorar');
+
+        const data = await response.json();
+        
+        console.log('[BookRating] Response data:', data);
+        
+        // Actualizar interfaz
+        ratingHint.textContent = `✓ ¡Gracias por tu valoración! ${rating} ⭐`;
+        ratingHint.style.color = '#06a77d';
+
+        // Actualizar estrellas activas
+        starBtns.forEach((b, idx) => {
+          if (idx < rating) {
+            b.classList.add('active');
+            b.style.opacity = '1';
+            b.style.color = '#ff006e';
+          } else {
+            b.classList.remove('active');
+            b.style.opacity = '0.5';
+            b.style.color = '';
+          }
+        });
+
+        // Actualizar contador de valoraciones
+        if (data.total_valoraciones !== undefined) {
+          const valCount = document.getElementById('valoraciones-count');
+          console.log('[BookRating] Looking for #valoraciones-count:', valCount);
+          if (valCount) {
+            console.log('[BookRating] Updating #valoraciones-count to:', data.total_valoraciones);
+            valCount.textContent = data.total_valoraciones;
+          }
+        }
+
+        // Actualizar rating promedio
+        if (data.rating_promedio !== undefined) {
+          const ratingValue = document.querySelector('.rating-value');
+          console.log('[BookRating] Looking for .rating-value:', ratingValue);
+          if (ratingValue) {
+            console.log('[BookRating] Updating .rating-value to:', `${data.rating_promedio.toFixed(1)}/5 (${data.total_valoraciones} votos)`);
+            ratingValue.textContent = `${data.rating_promedio.toFixed(1)}/5 (${data.total_valoraciones} votos)`;
+          }
+        }
+
+        setTimeout(() => {
+          ratingHint.textContent = 'Haz click para valorar 🌟';
+          ratingHint.style.color = '#b82db5';
+        }, 2500);
+      } catch (error) {
+        console.error('Error al valorar:', error);
+        ratingHint.textContent = '❌ Error al guardar valoración. Intenta de nuevo.';
+        ratingHint.style.color = '#ff4757';
+        setTimeout(() => {
+          ratingHint.textContent = 'Haz click para valorar 🌟';
+          ratingHint.style.color = '#b82db5';
+        }, 2000);
+      }
+    });
+  });
+  });
+})();</script><div class="libro-stats" data-astro-cid-xgtkqq7i><div class="stat-item" data-astro-cid-xgtkqq7i><strong id="descargas-count" data-astro-cid-xgtkqq7i>1</strong><p data-astro-cid-xgtkqq7i>Descargas</p></div><div class="stat-item" data-astro-cid-xgtkqq7i><strong id="valoraciones-count" data-astro-cid-xgtkqq7i>1</strong><p data-astro-cid-xgtkqq7i>Valoraciones</p></div></div></div></div></div></section><section class="section section-bg" data-astro-cid-xgtkqq7i><div class="container" data-astro-cid-xgtkqq7i><div class="section-header" data-astro-cid-xgtkqq7i><h2 data-astro-cid-xgtkqq7i>📚 También te puede interesar</h2><p data-astro-cid-xgtkqq7i>Libros relacionados</p></div><div class="relacionados-grid" data-astro-cid-xgtkqq7i><article class="book-card-small" data-astro-cid-xgtkqq7i><a href="/libro/caperucita" class="book-link" data-astro-cid-xgtkqq7i><div class="book-cover-small" style="background: from-purple-500 to-pink-500" data-astro-cid-xgtkqq7i><img class="book-cover-image" src="https://fskgaoqzitypansrtzsm.supabase.co/storage/v1/object/public/libros/portadas/1192a87e-29c8-4389-b3ef-d72c1f6e2f63/1785430647179-caperucita.jpg" alt="Portada de caperucita" loading="lazy" data-astro-cid-xgtkqq7i></div><h3 data-astro-cid-xgtkqq7i>caperucita</h3><p data-astro-cid-xgtkqq7i>user prueba 2 QA2</p><div class="book-rating" data-astro-cid-xgtkqq7i>⭐ 5.0</div></a></article></div></div></section></main><section class="cta-section" id="cta-participacion-global" data-astro-cid-zvmdtend><div class="container" data-astro-cid-zvmdtend><div class="cta-box" data-astro-cid-zvmdtend><h2 class="cta-title" data-astro-cid-zvmdtend>¿Tu familia quiere participar?</h2><p class="cta-desc" data-astro-cid-zvmdtend>Comparte fotos, videos y testimonios de tu hogar con la comunidad de CBI Personitas Biblioteca</p><a href="/auth/registro" class="cta-btn" data-astro-cid-zvmdtend>Unirse ahora<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" data-astro-cid-zvmdtend><path d="M5 12h14M12 5l7 7-7 7" data-astro-cid-zvmdtend></path></svg></a></div></div></section><footer class="footer" data-astro-cid-zvmdtend><div class="container" data-astro-cid-zvmdtend><div class="footer-top" data-astro-cid-zvmdtend><div class="footer-brand" data-astro-cid-zvmdtend><a href="/" class="footer-logo" aria-label="FamiliaLee inicio" data-astro-cid-zvmdtend><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" data-astro-cid-zvmdtend><rect x="3" y="4" width="13" height="16" rx="2" stroke="#c8872a" stroke-width="2" data-astro-cid-zvmdtend></rect><path d="M7 8h5M7 12h5M7 16h3" stroke="#c8872a" stroke-width="1.5" stroke-linecap="round" data-astro-cid-zvmdtend></path><path d="M16 6l3 2-3 2V6z" fill="#0d2240" data-astro-cid-zvmdtend></path></svg><span data-astro-cid-zvmdtend>CBI Personitas Biblioteca</span></a><p class="footer-desc" data-astro-cid-zvmdtend>Una comunidad de familias y autores que comparten el amor por la lectura y la union de las familias.</p><blockquote class="footer-verse" data-astro-cid-zvmdtend>"Instruye al niño en su camino, y aun cuando fuere viejo no se apartará de él." — <cite data-astro-cid-zvmdtend>Proverbios 22:6</cite></blockquote></div><nav class="footer-nav" aria-label="Explorar" data-astro-cid-zvmdtend><h3 data-astro-cid-zvmdtend>EXPLORAR</h3><ul data-astro-cid-zvmdtend><li data-astro-cid-zvmdtend><a href="/biblioteca" data-astro-cid-zvmdtend>Biblioteca</a></li><li data-astro-cid-zvmdtend><a href="/autores" data-astro-cid-zvmdtend>Autores</a></li><li data-astro-cid-zvmdtend><a href="/galeria-familiar" data-astro-cid-zvmdtend>Galería Familiar</a></li><li data-astro-cid-zvmdtend><a href="/recursos" data-astro-cid-zvmdtend>Recursos</a></li></ul></nav><nav class="footer-nav" aria-label="Cuenta" data-astro-cid-zvmdtend><h3 data-astro-cid-zvmdtend>CUENTA</h3><ul data-astro-cid-zvmdtend><li data-astro-cid-zvmdtend><a href="/auth/registro" data-astro-cid-zvmdtend>Registrarse</a></li><li data-astro-cid-zvmdtend><a href="/auth/login" data-astro-cid-zvmdtend>Ingresar</a></li><li data-astro-cid-zvmdtend><a href="/panel" data-astro-cid-zvmdtend>Mi Panel</a></li><li data-astro-cid-zvmdtend><a href="/admin" data-astro-cid-zvmdtend>Administrador</a></li></ul></nav></div><div class="footer-bottom" data-astro-cid-zvmdtend><p data-astro-cid-zvmdtend>&copy; 2026 CBI Personitas Biblioteca. Todos los derechos reservados.</p><p class="footer-heart" data-astro-cid-zvmdtend>Hecho con <span aria-label="amor" data-astro-cid-zvmdtend>♥</span> para las familias</p></div></div></footer><script type="module" src="/_astro/CtaFooter.astro_astro_type_script_index_0_lang.BQHwERkG.js"></script></body></html><script>(function(){const slug = "fre";
+const apiUrl = "https://familias.vercel.app/api";
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const res = await fetch(`${apiUrl}/libros/${slug}`, { cache: 'no-store' });
+      if (!res.ok) return;
+
+      const libro = await res.json();
+
+      const descargasEl = document.getElementById('descargas-count');
+      if (descargasEl && typeof libro.descargas_total === 'number') {
+        descargasEl.textContent = libro.descargas_total.toLocaleString('es');
+      }
+
+      const valoracionesEl = document.getElementById('valoraciones-count');
+      if (valoracionesEl && typeof libro.total_valoraciones === 'number') {
+        valoracionesEl.textContent = String(libro.total_valoraciones);
+      }
+
+      const promedioEl = document.getElementById('hero-rating-promedio');
+      if (promedioEl && typeof libro.rating_promedio === 'number') {
+        promedioEl.textContent = Number(libro.rating_promedio).toFixed(1);
+      }
+
+      const votosEl = document.getElementById('hero-rating-votos');
+      if (votosEl && typeof libro.total_valoraciones === 'number') {
+        votosEl.textContent = `(${libro.total_valoraciones} votos)`;
+      }
+
+      const ratingValue = document.querySelector('.rating-value');
+      if (ratingValue && typeof libro.rating_promedio === 'number' && typeof libro.total_valoraciones === 'number') {
+        ratingValue.textContent = `${Number(libro.rating_promedio).toFixed(1)}/5 (${libro.total_valoraciones} votos)`;
+      }
+    } catch (error) {
+      console.error('No se pudieron refrescar métricas del libro:', error);
+    }
+  });
+})();</script>

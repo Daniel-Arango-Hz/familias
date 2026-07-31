@@ -53,6 +53,23 @@ router.get('/:slug', optionalAuth, async (req, res) => {
 
   if (!autor) return res.status(404).json({ error: 'Autor no encontrado' });
 
+  // Si la vista no incluye email, lo agregamos aquí consultando el usuario
+  if (!autor.email && autor.usuario_id) {
+    const { data: usuario, error: usuarioError } = await supabase
+      .from('usuarios')
+      .select('email')
+      .eq('id', autor.usuario_id)
+      .single();
+
+    if (!usuarioError && usuario?.email) {
+      autor.email = usuario.email;
+    }
+
+    if (!autor.usuario) {
+      autor.usuario = usuario || null;
+    }
+  }
+
   // Libros del autor
   const { data: libros } = await supabase
     .from('libros_completos')
@@ -80,30 +97,58 @@ router.get('/:slug', optionalAuth, async (req, res) => {
 router.post('/:id/seguir', requireAuth, async (req, res) => {
   const { id } = req.params;
 
-  const { data: existe } = await supabase
+  const { data: existe, error: existeError } = await supabase
     .from('seguidores_autor')
     .select('autor_id')
     .eq('seguidor_id', req.user.id)
     .eq('autor_id', id)
     .maybeSingle();
 
+  if (existeError) {
+    console.error('[seguir] Error comprobando existencia:', existeError);
+    return res.status(500).json({ error: 'Error al comprobar seguimiento' });
+  }
+
+  let siguiendo = false;
   if (existe) {
-    await supabase.from('seguidores_autor').delete()
-      .eq('seguidor_id', req.user.id).eq('autor_id', id);
+    const { error: deleteError } = await supabaseAdmin
+      .from('seguidores_autor')
+      .delete()
+      .eq('seguidor_id', req.user.id)
+      .eq('autor_id', id);
+
+    if (deleteError) {
+      console.error('[seguir] Error al eliminar seguimiento:', deleteError);
+      return res.status(500).json({ error: 'Error al dejar de seguir autor' });
+    }
+    siguiendo = false;
   } else {
-    await supabase.from('seguidores_autor').insert({ seguidor_id: req.user.id, autor_id: id });
+    const { error: insertError } = await supabaseAdmin
+      .from('seguidores_autor')
+      .insert({ seguidor_id: req.user.id, autor_id: id });
+
+    if (insertError) {
+      console.error('[seguir] Error al insertar seguimiento:', insertError);
+      return res.status(500).json({ error: 'Error al seguir autor' });
+    }
+    siguiendo = true;
   }
 
   // Obtener datos actualizados del autor
-  const { data: autorActualizado } = await supabase
+  const { data: autorActualizado, error: autorError } = await supabaseAdmin
     .from('autores')
     .select('total_seguidores')
     .eq('id', id)
     .single();
 
-  res.json({ 
-    siguiendo: !existe,
-    total_seguidores: autorActualizado?.total_seguidores || 0
+  if (autorError) {
+    console.error('[seguir] Error al obtener seguidores actualizados:', autorError);
+    return res.status(500).json({ error: 'Error al obtener seguimiento actualizado' });
+  }
+
+  res.json({
+    siguiendo,
+    total_seguidores: autorActualizado?.total_seguidores || 0,
   });
 });
 

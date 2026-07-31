@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.API_URL ?? 'http://localhost:3000/api';
+const API_URL = import.meta.env.PUBLIC_API_URL ?? import.meta.env.API_URL ?? 'http://localhost:3000/api';
 
 // Seguir/Dejar de seguir autor
 export async function POST({ request }) {
@@ -33,7 +33,6 @@ export async function POST({ request }) {
     const response = await fetch(`${API_URL}/autores/${autorId}/seguir`, {
       method: 'POST',
       headers,
-      timeout: 10000
     });
 
     console.log(`[seguir] Backend response status:`, response.status);

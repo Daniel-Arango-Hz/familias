@@ -47,11 +47,28 @@ try {
   }
   
   if (autor) {
-    const allLibros = await obtenerLibros({ limite: 100 });
-    librosAutor = (allLibros.data || []).filter((l: any) => 
-      l.autor_slug?.toLowerCase() === normalizedSlug || 
-      l.autor_nombre?.toLowerCase() === autor.nombre?.toLowerCase()
-    );
+    try {
+      const autorCompleto = await obtenerAutor(rawSlug || normalizedSlug);
+      autor = { ...autor, ...autorCompleto };
+    } catch (e) {
+      console.warn('No se pudo enriquecer el autor con sus libros:', e);
+    }
+
+    const librosDelAutor = Array.isArray(autor?.libros) && autor.libros.length > 0
+      ? autor.libros
+      : [];
+
+    if (librosDelAutor.length > 0) {
+      librosAutor = librosDelAutor;
+    } else {
+      const allLibros = await obtenerLibros({ limite: 100 });
+      librosAutor = (allLibros.data || []).filter((l: any) =>
+        l.autor_slug?.toLowerCase() === normalizedSlug ||
+        l.autor_nombre?.toLowerCase() === autor.nombre?.toLowerCase()
+      );
+    }
+
+    autor.email = autor.email || autor.correo || autor.usuario?.email || '';
   }
 } catch (err) {
   console.error('Error al obtener autor:', err);
@@ -90,7 +107,12 @@ try {
                   </div>
                 </div>
 
-                <AuthorActions autorId={autor.id} autorNombre={autor.nombre} />
+                <AuthorActions
+                  autorId={autor.id}
+                  autorNombre={autor.nombre}
+                  autorEmail={autor.email || autor.correo || autor.usuario?.email || ''}
+                  estaSiguiendo={Boolean(autor.siguiendo)}
+                />
               </div>
             </div>
           </div>
@@ -101,19 +123,28 @@ try {
             <div class="container">
               <h2 class="section-title">📚 Libros de {autor.nombre}</h2>
               <div class="libros-grid">
-                {librosAutor.map((libro: any) => (
-                  <article class="libro-card">
-                    <a href={`/libro/${libro.slug}`} class="libro-link">
-                      <div class="libro-cover-card" style={`background: ${libro.portada_gradiente}`}>
-                        <span class="libro-icon">{libro.portada_icono || '📖'}</span>
-                        {libro.destacado && <span class="badge-pequeño">⭐</span>}
-                      </div>
-                      <h3>{libro.titulo}</h3>
-                      <p class="edad-rango">Edad: {libro.edad_rango || 'N/A'}</p>
-                      <div class="rating">⭐ {libro.rating_promedio?.toFixed(1) || '0'}</div>
-                    </a>
-                  </article>
-                ))}
+                {librosAutor.map((libro: any) => {
+                  const isImageCover = typeof libro.portada_icono === 'string' && /^https?:\/\//i.test(libro.portada_icono);
+                  return (
+                    <article class="libro-card">
+                      <a href={`/libro/${libro.slug}`} class="libro-link">
+                        <div class="libro-cover-card" style={`background: ${libro.portada_gradiente || 'linear-gradient(135deg, #00a8e8, #6c5ce7)'}`}>
+                          {isImageCover ? (
+                            <img class="libro-icon-img" src={libro.portada_icono} alt={libro.titulo} loading="lazy" />
+                          ) : (
+                            <span class="libro-icon">{libro.portada_icono || '📖'}</span>
+                          )}
+                          {libro.destacado && <span class="badge-pequeño">⭐</span>}
+                        </div>
+                        <div class="libro-info-card">
+                          <h3>{libro.titulo}</h3>
+                          <p class="edad-rango">Edad: {libro.edad_rango || 'N/A'}</p>
+                          <div class="rating">⭐ {libro.rating_promedio?.toFixed(1) || '0'}</div>
+                        </div>
+                      </a>
+                    </article>
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -197,6 +228,94 @@ try {
     color: rgba(255, 255, 255, 0.9);
     line-height: 1.6;
     margin: 0;
+  }
+
+  .libros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .libro-card {
+    border-radius: 24px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    background: white;
+    box-shadow: 0 14px 40px rgba(17, 24, 39, 0.08);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .libro-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 60px rgba(17, 24, 39, 0.12);
+  }
+
+  .libro-link {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .libro-cover-card {
+    border-radius: 24px;
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    color: white;
+    overflow: hidden;
+  }
+
+  .libro-cover-card img.libro-icon-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .libro-icon {
+    font-size: 3rem;
+  }
+
+  .badge-pequeño {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.88);
+    color: #222;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .libro-info-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .libro-info-card h3 {
+    font-size: 1.1rem;
+    line-height: 1.3;
+    margin: 0;
+    color: #102a43;
+  }
+
+  .edad-rango,
+  .rating {
+    font-size: 0.95rem;
+    color: #475569;
+    margin: 0;
+  }
+
+  .rating {
+    font-weight: 700;
+    color: #0f172a;
   }
 
   .autor-stats {

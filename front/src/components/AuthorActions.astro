@@ -3,136 +3,114 @@ interface Props {
   autorId: string;
   autorNombre: string;
   autorEmail?: string;
+  estaSiguiendo?: boolean;
 }
 
-const { autorId, autorNombre, autorEmail } = Astro.props;
-const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
+const { autorId, autorNombre, autorEmail, estaSiguiendo = false } = Astro.props;
 ---
 
 <div class="autor-actions-row">
-  <button class="btn-seguir" id="btn-seguir" data-autor-id={autorId} data-autor-nombre={autorNombre}>
-    ⭐ Seguir autor
+  <button
+    class={`btn-seguir${estaSiguiendo ? ' siguiendo' : ''}`}
+    id="btn-seguir"
+    data-autor-id={autorId}
+    data-autor-nombre={autorNombre}
+  >
+    {estaSiguiendo ? '⭐ Siguiendo' : '⭐ Seguir autor'}
   </button>
   <button class="btn-contactar" id="btn-contactar" data-autor-email={autorEmail || ''}>
-    💬 Contactar
+    💬 Conectar
   </button>
 </div>
 
-<script define:vars={{ autorId, autorNombre, autorEmail, apiUrl }}>
+<script define:vars={{ autorId, autorNombre, autorEmail, estaSiguiendo }}>
   document.addEventListener('DOMContentLoaded', () => {
     const btnSeguir = document.getElementById('btn-seguir');
     const btnContactar = document.getElementById('btn-contactar');
 
-    // Obtener token del localStorage
+    if (!btnSeguir && !btnContactar) return;
+
     function getToken() {
-      return localStorage.getItem('token');
+      return window.localStorage.getItem('token');
     }
 
-    // Obtener headers con autenticación
-    function getAuthHeaders() {
-      const token = getToken();
-      const headers = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+    function showLoginModal(title, message) {
+      const modal = document.getElementById('loginModalOverlay');
+      if (!modal) return;
+
+      modal.classList.add('active');
+      const titleEl = document.getElementById('modalTitle');
+      const msgEl = document.getElementById('modalMessage');
+      if (titleEl) titleEl.textContent = title;
+      if (msgEl) msgEl.textContent = message;
+    }
+
+    function setSeguirState(isSiguiendo, totalSeguidores) {
+      if (!btnSeguir) return;
+
+      btnSeguir.classList.toggle('siguiendo', Boolean(isSiguiendo));
+      btnSeguir.textContent = isSiguiendo ? '⭐ Siguiendo' : '⭐ Seguir autor';
+
+      const seguidoresEl = document.getElementById('seguidores-count');
+      if (seguidoresEl && totalSeguidores !== undefined) {
+        seguidoresEl.textContent = totalSeguidores;
       }
-      return headers;
     }
 
-    // Seguir autor
     if (btnSeguir) {
+      setSeguirState(Boolean(estaSiguiendo));
+
       btnSeguir.addEventListener('click', async () => {
         try {
           btnSeguir.disabled = true;
 
           const token = getToken();
           if (!token) {
-            const modal = document.getElementById('loginModalOverlay');
-            if (modal) {
-              modal.classList.add('active');
-              const titleEl = document.getElementById('modalTitle');
-              const msgEl = document.getElementById('modalMessage');
-              if (titleEl) titleEl.textContent = '⭐ Seguir autores';
-              if (msgEl) msgEl.textContent = 'Debes iniciar sesión para seguir autores. ⭐';
-              btnSeguir.disabled = false;
-            }
+            showLoginModal('⭐ Seguir autores', 'Debes iniciar sesión para seguir autores. ⭐');
             return;
           }
 
-          const response = await fetch(`${apiUrl}/autores/${autorId}/seguir`, {
+          const response = await fetch('/api/seguir', {
             method: 'POST',
-            headers: getAuthHeaders(),
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ autorId }),
           });
 
           if (response.status === 401) {
-            const modal = document.getElementById('loginModalOverlay');
-            if (modal) {
-              modal.classList.add('active');
-              const titleEl = document.getElementById('modalTitle');
-              const msgEl = document.getElementById('modalMessage');
-              if (titleEl) titleEl.textContent = 'Sesión expirada';
-              if (msgEl) msgEl.textContent = 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo. 🔐';
-            }
-            btnSeguir.disabled = false;
+            showLoginModal('Sesión expirada', 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo. 🔐');
             return;
           }
 
           if (!response.ok) throw new Error('Error al seguir');
 
           const data = await response.json();
-          const isSiguiendo = data.siguiendo;
-
-          if (isSiguiendo) {
-            btnSeguir.classList.add('siguiendo');
-            btnSeguir.textContent = '⭐ Siguiendo';
-            
-            // Actualizar contador de seguidores
-            const seguidoresEl = document.getElementById('seguidores-count');
-            if (seguidoresEl && data.total_seguidores !== undefined) {
-              seguidoresEl.textContent = data.total_seguidores;
-            }
-          } else {
-            btnSeguir.classList.remove('siguiendo');
-            btnSeguir.textContent = '⭐ Seguir autor';
-            
-            // Actualizar contador de seguidores
-            const seguidoresEl = document.getElementById('seguidores-count');
-            if (seguidoresEl && data.total_seguidores !== undefined) {
-              seguidoresEl.textContent = data.total_seguidores;
-            }
-          }
-
-          btnSeguir.disabled = false;
+          setSeguirState(Boolean(data?.siguiendo), data?.total_seguidores);
         } catch (error) {
-          console.error('Error:', error);
-          const modal = document.getElementById('loginModalOverlay');
-          if (modal) {
-            modal.classList.add('active');
-            const titleEl = document.getElementById('modalTitle');
-            const msgEl = document.getElementById('modalMessage');
-            if (titleEl) titleEl.textContent = 'Error';
-            if (msgEl) msgEl.textContent = 'Error al seguir. Intenta de nuevo.';
-          }
-          btnSeguir.disabled = false;
+          console.error('Error al seguir autor:', error);
+          showLoginModal('Error', 'No se pudo actualizar el seguimiento. Intenta de nuevo.');
+        } finally {
+          if (btnSeguir) btnSeguir.disabled = false;
         }
       });
     }
 
-    // Contactar
     if (btnContactar) {
       btnContactar.addEventListener('click', () => {
-        if (!autorEmail || autorEmail.trim() === '') {
-          const modal = document.getElementById('loginModalOverlay');
-          if (modal) {
-            modal.classList.add('active');
-            const titleEl = document.getElementById('modalTitle');
-            const msgEl = document.getElementById('modalMessage');
-            if (titleEl) titleEl.textContent = 'Contactar autor';
-            if (msgEl) msgEl.textContent = `Para contactar a ${autorNombre}, abre tu cliente de email.`;
-          }
+        const token = getToken();
+
+        if (!token) {
+          showLoginModal('Conectar autor', 'Debes iniciar sesión para contactar al autor. 🔐');
           return;
         }
+
+        if (!autorEmail || autorEmail.trim() === '') {
+          showLoginModal('Conectar autor', 'Este autor no tiene email público disponible.');
+          return;
+        }
+
         window.location.href = `mailto:${autorEmail}?subject=Contacto desde FamiliaLee`;
       });
     }
