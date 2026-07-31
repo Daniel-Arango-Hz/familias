@@ -1,1 +1,0 @@
-import{n as e}from"./api.vwouhIdc.js";e()||(window.location.href=`/auth/login`);

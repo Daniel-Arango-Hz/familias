@@ -1,0 +1,25 @@
+import { t as __exportAll } from "./rolldown-runtime_D7D4PA-g.mjs";
+import { i as renderComponent, m as maybeRenderHead, u as renderTemplate } from "./server_DqkcE3sw.mjs";
+import { t as createComponent } from "./compiler_uhih2xtZ.mjs";
+import { t as renderScript } from "./script_VLZeParw.mjs";
+import { t as $$Layout } from "./Layout_BUTokUE6.mjs";
+import { t as $$Header } from "./Header_B7zC4OBp.mjs";
+//#region src/pages/subir-libro.astro
+var subir_libro_exports = /* @__PURE__ */ __exportAll({
+	default: () => $$SubirLibro,
+	file: () => $$file,
+	url: () => $$url
+});
+var $$SubirLibro = createComponent(($$result, $$props, $$slots) => {
+	return renderTemplate`${renderComponent($$result, "Layout", $$Layout, {
+		"title": "Subir Libro – FamiliaLee",
+		"description": "Sube tu libro en PDF o DOCX."
+	}, { "default": async ($$result) => renderTemplate`${renderComponent($$result, "Header", $$Header, {})}${maybeRenderHead($$result)}<main class="upload-container"><section class="upload-hero"><div class="container"><h1 class="upload-titulo">📤 Sube tu Libro</h1><p class="upload-subtitle">Carga un PDF o DOCX. Los archivos Word se convierten automáticamente a PDF antes de publicar.</p></div></section><section class="upload-content"><div class="container"><div class="upload-grid"><aside class="upload-visual-column"><article class="upload-banner-card"><div class="banner-overlay"></div><div class="banner-copy"><p class="banner-eyebrow">Publica Tu Historia</p><h2>Convierte tus páginas en una experiencia para toda la familia</h2><p>Sube tu libro en PDF o Word y compártelo con la comunidad de FamiliaLee. Puedes añadir una miniatura para que tu publicación destaque desde el primer vistazo.</p></div></article><!-- Zona de Drop --><div class="drop-zone" id="dropZone"><svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg><h2>Arrastra tu archivo aquí</h2><p>o haz clic para seleccionar</p><input type="file" id="fileInput" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display: none;"></div></aside><!-- Formulario --><div class="upload-form"><h2>Información del Libro</h2><div class="form-group"><label for="titulo">Título *</label><input type="text" id="titulo" placeholder="Ej: Mi Historia Favorita" required></div><div class="form-group"><label for="descripcion">Descripción *</label><textarea id="descripcion" placeholder="Breve descripción del libro" rows="4" required></textarea></div><div class="form-row"><div class="form-group"><label for="autor">Autor *</label><input type="text" id="autor" placeholder="Tu nombre" required></div><div class="form-group"><label for="edadRango">Edad Recomendada *</label><input type="text" id="edadRango" placeholder="Ej: 5-10" required></div></div><div class="form-group"><label for="categoria">Categoría *</label><select id="categoria" required><option value="">Selecciona una categoría</option><option value="Biblia">Biblia</option><option value="Ficción">Ficción</option><option value="Educativo">Educativo</option><option value="Aventura">Aventura</option><option value="Drama">Drama</option><option value="Poesía">Poesía</option><option value="Historia">Historia</option><option value="Otro">Otro</option></select></div><div class="form-group"><label for="anio">Año de Publicación</label><input type="number" id="anio" placeholder="2026" value="2026"></div><div class="form-group"><label for="coverInput">Miniatura del libro (opcional)</label><input type="file" id="coverInput" accept="image/jpeg,image/png,image/webp,image/gif"><small class="input-help">Formatos permitidos: JPG, PNG, WEBP o GIF (máx 5MB).</small></div><div id="coverPreview" class="cover-preview" style="display: none;"><img id="coverPreviewImage" alt="Vista previa de miniatura"><div><p>🖼️ <strong id="coverName"></strong></p><p id="coverSize"></p></div></div><div id="fileInfo" class="file-info" style="display: none;"><p>📄 <strong id="fileName"></strong></p><p id="fileSize"></p></div><div id="uploadProgress" class="upload-progress" style="display: none;"><div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div><p id="progressText">Procesando...</p></div><button id="uploadBtn" class="btn-submit" disabled>Subir Libro</button><div id="uploadStatus" class="upload-status"></div></div></div></div></section></main>${renderScript($$result, "/Users/useit/Desktop/familias/front/src/pages/subir-libro.astro?astro&type=script&index=0&lang.ts")}` })}`;
+}, "/Users/useit/Desktop/familias/front/src/pages/subir-libro.astro", void 0);
+var $$file = "/Users/useit/Desktop/familias/front/src/pages/subir-libro.astro";
+var $$url = "/subir-libro";
+//#endregion
+//#region \0virtual:astro:page:src/pages/subir-libro@_@astro
+var page = () => subir_libro_exports;
+//#endregion
+export { page };
