@@ -151,21 +151,40 @@ router.post(
 router.post('/:id/like', requireAuth, async (req, res) => {
   const { id } = req.params;
 
-  const { data: existe } = await supabaseAdmin
+  const { data: existe, error: existeError } = await supabaseAdmin
     .from('likes_testimonios')
     .select('testimonio_id')
     .eq('usuario_id', req.user.id)
     .eq('testimonio_id', id)
     .maybeSingle();
 
+  if (existeError) return res.status(500).json({ error: existeError.message });
+
+  let liked = false;
   if (existe) {
-    await supabaseAdmin.from('likes_testimonios').delete()
-      .eq('usuario_id', req.user.id).eq('testimonio_id', id);
-    return res.json({ liked: false });
+    const { error: deleteError } = await supabaseAdmin
+      .from('likes_testimonios')
+      .delete()
+      .eq('usuario_id', req.user.id)
+      .eq('testimonio_id', id);
+
+    if (deleteError) return res.status(500).json({ error: deleteError.message });
+  } else {
+    const { error: insertError } = await supabaseAdmin
+      .from('likes_testimonios')
+      .insert({ usuario_id: req.user.id, testimonio_id: id });
+
+    if (insertError) return res.status(500).json({ error: insertError.message });
+    liked = true;
   }
 
-  await supabaseAdmin.from('likes_testimonios').insert({ usuario_id: req.user.id, testimonio_id: id });
-  res.json({ liked: true });
+  const { count, error: countError } = await supabaseAdmin
+    .from('likes_testimonios')
+    .select('*', { count: 'exact', head: true })
+    .eq('testimonio_id', id);
+
+  if (countError) return res.status(500).json({ error: countError.message });
+  res.json({ liked, total_likes: count ?? 0 });
 });
 
 // ─── PATCH /galeria/:id/publicar (admin aprueba/rechaza) ─────────────────────

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { supabase, supabaseAdmin } from '../config/supabase.js';
-import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import { requireAuth, requireAdmin, optionalAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 
 const router = Router();
@@ -90,13 +90,13 @@ async function ensureUniqueVideoSlug(baseSlug) {
 }
 
 // ─── GET /videos ──────────────────────────────────────────────────────────────
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   const { categoria, page = 1, limit = 9 } = req.query;
   const offset = (Number(page) - 1) * Number(limit);
 
   let q = supabase
-    .from('videos')
-    .select('id, titulo, slug, duracion, vistas, gradiente, emoji, categoria, url, autor_id', { count: 'exact' })
+    .from('videos_con_likes')
+    .select('id, titulo, slug, duracion, vistas, gradiente, emoji, categoria, url, autor_id, total_likes, created_at', { count: 'exact' })
     .eq('publicado', true)
     .order('created_at', { ascending: false })
     .range(offset, offset + Number(limit) - 1);
@@ -106,11 +106,23 @@ router.get('/', async (req, res) => {
   const { data: videos, error, count } = await q;
   if (error) return res.status(500).json({ error: error.message });
 
-  // Resolver nombres de autor sin join ambiguo.
+  const videoIds = [...new Set((videos || []).map((v) => v.id).filter(Boolean))];
+  let likedSet = new Set();
+
+  if (req.user && videoIds.length > 0) {
+    const { data: userLikes, error: likesError } = await supabaseAdmin
+      .from('likes_videos')
+      .select('video_id')
+      .eq('usuario_id', req.user.id)
+      .in('video_id', videoIds);
+
+    if (likesError) return res.status(500).json({ error: likesError.message });
+    likedSet = new Set((userLikes || []).map((l) => l.video_id));
+  }
+
   const autorIds = [...new Set((videos || []).map((v) => v.autor_id).filter(Boolean))];
   const autoresMap = {};
 
-  // IDs de usuario extraídos del path de la URL para videos sin autor_id.
   const urlUserIds = [...new Set(
     (videos || [])
       .filter((v) => !v.autor_id && v.url)
@@ -167,10 +179,62 @@ router.get('/', async (req, res) => {
       const match = String(v.url).match(/\/videos\/([0-9a-f-]{36})\//i);
       if (match) autor_nombre = urlUserMap[match[1]] || 'Anónimo';
     }
-    return { ...v, autor_nombre };
+
+    return {
+      ...v,
+      autor_nombre,
+      likes: Number(v.total_likes || 0),
+      user_liked: likedSet.has(v.id),
+    };
   });
 
   res.json({ data, total: count, page: Number(page), totalPaginas: Math.ceil(count / Number(limit)) });
+});
+
+router.post('/:slug/like', requireAuth, async (req, res) => {
+  const { slug } = req.params;
+  const { data: video, error: videoError } = await supabase
+    .from('videos')
+    .select('id')
+    .eq('slug', slug)
+    .eq('publicado', true)
+    .maybeSingle();
+
+  if (videoError || !video) return res.status(404).json({ error: 'Video no encontrado' });
+
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from('likes_videos')
+    .select('video_id')
+    .eq('usuario_id', req.user.id)
+    .eq('video_id', video.id)
+    .maybeSingle();
+
+  if (existingError) return res.status(500).json({ error: existingError.message });
+
+  let liked = false;
+  if (existing) {
+    const { error: deleteError } = await supabaseAdmin
+      .from('likes_videos')
+      .delete()
+      .eq('usuario_id', req.user.id)
+      .eq('video_id', video.id);
+
+    if (deleteError) return res.status(500).json({ error: deleteError.message });
+  } else {
+    const { error: insertError } = await supabaseAdmin
+      .from('likes_videos')
+      .insert({ usuario_id: req.user.id, video_id: video.id });
+
+    if (insertError) return res.status(500).json({ error: insertError.message });
+    liked = true;
+  }
+
+  const { count } = await supabaseAdmin
+    .from('likes_videos')
+    .select('*', { count: 'exact', head: true })
+    .eq('video_id', video.id);
+
+  res.json({ liked, total_likes: count ?? 0 });
 });
 
 // ─── GET /videos/:slug ────────────────────────────────────────────────────────

@@ -160,7 +160,53 @@ try {
 </Layout>
 
 <script define:vars={{ slug, apiUrl }}>
-  document.addEventListener('DOMContentLoaded', async () => {
+  function onReady(callback) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', callback);
+    } else {
+      callback();
+    }
+  }
+
+  function updateBookMetrics(detail) {
+    if (!detail || detail.slug !== slug) return;
+
+    if (detail.descargas_total !== undefined) {
+      const descargasEl = document.getElementById('descargas-count');
+      if (descargasEl) {
+        descargasEl.textContent = String(detail.descargas_total).toLocaleString('es');
+      }
+    }
+
+    if (detail.total_valoraciones !== undefined) {
+      const valoracionesEl = document.getElementById('valoraciones-count');
+      if (valoracionesEl) {
+        valoracionesEl.textContent = String(detail.total_valoraciones);
+      }
+      const votosEl = document.getElementById('hero-rating-votos');
+      if (votosEl) {
+        votosEl.textContent = `(${detail.total_valoraciones} votos)`;
+      }
+    }
+
+    if (detail.rating_promedio !== undefined) {
+      const promedioEl = document.getElementById('hero-rating-promedio');
+      if (promedioEl) {
+        promedioEl.textContent = Number(detail.rating_promedio).toFixed(1);
+      }
+      const ratingValue = document.querySelector('.rating-value');
+      if (ratingValue && detail.total_valoraciones !== undefined) {
+        ratingValue.textContent = `${Number(detail.rating_promedio).toFixed(1)}/5 (${detail.total_valoraciones} votos)`;
+      }
+    }
+  }
+
+  onReady(async () => {
+    window.addEventListener('book:update', (event) => {
+      if (!event?.detail) return;
+      updateBookMetrics(event.detail);
+    });
+
     try {
       const res = await fetch(`${apiUrl}/libros/${slug}`, { cache: 'no-store' });
       if (!res.ok) return;

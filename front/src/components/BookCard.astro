@@ -11,7 +11,7 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
 ---
 
 {variante === 'vertical' ? (
-  <article class="book-card">
+  <article class="book-card" data-libro-slug={libro.slug}>
     <a href={`/libro/${libro.slug}`} class="book-card-link" aria-label={`Ver ${libro.titulo}`}>
       <div class="book-cover" style={`background: ${libro.portadaGradiente}`}>
         {libro.destacado && <span class="badge badge-destacado">Destacado</span>}
@@ -32,13 +32,13 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
           {libro.categorias.map((cat) => <span class="badge">{cat}</span>)}
         </div>
         <div class="book-meta">
-          <div class="star-rating">
+          <div class="star-rating" data-book-count="rating">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
-            {libro.rating} <span>({libro.votos})</span>
+            <span data-book-count="rating-value">{libro.rating}</span> <span data-book-count="valoraciones">({libro.votos})</span>
           </div>
-          <div class="book-descargas">
+          <div class="book-descargas" data-book-count="descargas">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
@@ -58,7 +58,7 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
     </a>
   </article>
 ) : (
-  <article class="book-h-card">
+  <article class="book-h-card" data-libro-slug={libro.slug}>
     <a href={`/libro/${libro.slug}`} class="book-h-link" aria-label={`Ver ${libro.titulo}`}>
       <div class="book-h-thumb" style={`background: ${libro.portadaGradiente}`} aria-hidden="true">
         {isImageCover ? (
@@ -75,13 +75,13 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
           <span class="badge">{libro.edadRango}</span>
         </div>
         <div class="book-meta">
-          <div class="star-rating">
+          <div class="star-rating" data-book-count="rating">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
-            {libro.rating}
+            <span data-book-count="rating-value">{libro.rating}</span>
           </div>
-          <div class="book-descargas">
+          <div class="book-descargas" data-book-count="descargas">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>

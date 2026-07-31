@@ -11,6 +11,7 @@ import videosRoutes from './routes/videos.js';
 import galeriaRoutes from './routes/galeria.js';
 import usuariosRoutes from './routes/usuarios.js';
 import uploadRoutes from './routes/upload.js';
+import adminRoutes from './routes/admin.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 3002;
@@ -44,6 +45,7 @@ app.use('/api/autores', autoresRoutes);
 app.use('/api/videos', videosRoutes);
 app.use('/api/galeria', galeriaRoutes);
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) =>

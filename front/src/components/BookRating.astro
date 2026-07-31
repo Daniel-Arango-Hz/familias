@@ -127,148 +127,150 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 </style>
 
 <script define:vars={{ libroSlug, apiUrl }}>
-  document.addEventListener('DOMContentLoaded', () => {
+  function onReady(callback) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', callback);
+    } else {
+      callback();
+    }
+  }
+
+  function getToken() {
+    return localStorage.getItem('token');
+  }
+
+  function getAuthHeaders() {
+    const token = getToken();
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  }
+
+  function dispatchBookUpdate(detail) {
+    window.dispatchEvent(new CustomEvent('book:update', { detail }));
+  }
+
+  onReady(() => {
     const starsContainer = document.getElementById('stars-interactive');
     const ratingHint = document.getElementById('rating-hint');
-    const starBtns = starsContainer?.querySelectorAll('.star-btn');
+    const starBtns = starsContainer?.querySelectorAll('.star-btn') || [];
 
-    // Obtener token del localStorage
-    function getToken() {
-      return localStorage.getItem('token');
-    }
-
-    // Obtener headers con autenticación
-    function getAuthHeaders() {
-      const token = getToken();
-      const headers = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      return headers;
-    }
-
-    // Manejar hover en estrellas
-    starBtns?.forEach((btn) => {
-    btn.addEventListener('mouseenter', () => {
-      const rating = parseInt(btn.dataset.rating);
-      starBtns.forEach((b, idx) => {
-        if (idx < rating) {
-          b.style.opacity = '1';
-          b.style.color = '#ff006e';
-        } else {
-          b.style.opacity = '0.3';
-        }
-      });
-    });
-
-    btn.addEventListener('mouseleave', () => {
-      starBtns.forEach((b) => {
-        b.style.opacity = '0.5';
-        b.style.color = '';
-      });
-    });
-
-    // Click para valorar
-    btn.addEventListener('click', async () => {
-      try {
-        const token = getToken();
-        if (!token) {
-          // Mostrar modal sin importar
-          const modal = document.getElementById('loginModalOverlay');
-          if (modal) {
-            modal.classList.add('active');
-            const titleEl = document.getElementById('modalTitle');
-            const msgEl = document.getElementById('modalMessage');
-            if (titleEl) titleEl.textContent = '⭐ Valorar libros';
-            if (msgEl) msgEl.textContent = 'Debes iniciar sesión para valorar libros. ⭐';
-          }
-          return;
-        }
-
-        const rating = parseInt(btn.dataset.rating);
-        ratingHint.textContent = '⏳ Guardando valoración...';
-        ratingHint.style.color = '#b82db5';
-
-        const response = await fetch(`${apiUrl}/libros/${libroSlug}/valorar`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ 
-            puntuacion: rating,
-            calificacion: rating 
-          }),
-        });
-
-        if (response.status === 401) {
-          const modal = document.getElementById('loginModalOverlay');
-          if (modal) {
-            modal.classList.add('active');
-            const titleEl = document.getElementById('modalTitle');
-            const msgEl = document.getElementById('modalMessage');
-            if (titleEl) titleEl.textContent = 'Sesión expirada';
-            if (msgEl) msgEl.textContent = 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo. 🔐';
-          }
-          return;
-        }
-
-        if (!response.ok) throw new Error('Error al valorar');
-
-        const data = await response.json();
-        
-        console.log('[BookRating] Response data:', data);
-        
-        // Actualizar interfaz
-        ratingHint.textContent = `✓ ¡Gracias por tu valoración! ${rating} ⭐`;
-        ratingHint.style.color = '#06a77d';
-
-        // Actualizar estrellas activas
+    starBtns.forEach((btn) => {
+      btn.addEventListener('mouseenter', () => {
+        const rating = parseInt(btn.dataset.rating, 10);
         starBtns.forEach((b, idx) => {
           if (idx < rating) {
-            b.classList.add('active');
             b.style.opacity = '1';
             b.style.color = '#ff006e';
           } else {
-            b.classList.remove('active');
-            b.style.opacity = '0.5';
-            b.style.color = '';
+            b.style.opacity = '0.3';
           }
         });
+      });
 
-        // Actualizar contador de valoraciones
-        if (data.total_valoraciones !== undefined) {
-          const valCount = document.getElementById('valoraciones-count');
-          console.log('[BookRating] Looking for #valoraciones-count:', valCount);
-          if (valCount) {
-            console.log('[BookRating] Updating #valoraciones-count to:', data.total_valoraciones);
-            valCount.textContent = data.total_valoraciones;
+      btn.addEventListener('mouseleave', () => {
+        starBtns.forEach((b) => {
+          b.style.opacity = '0.5';
+          b.style.color = '';
+        });
+      });
+
+      btn.addEventListener('click', async () => {
+        try {
+          const token = getToken();
+          if (!token) {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+              modal.classList.add('active');
+              const titleEl = document.getElementById('modalTitle');
+              const msgEl = document.getElementById('modalMessage');
+              if (titleEl) titleEl.textContent = '⭐ Valorar libros';
+              if (msgEl) msgEl.textContent = 'Debes iniciar sesión para valorar libros. ⭐';
+            }
+            return;
           }
-        }
 
-        // Actualizar rating promedio
-        if (data.rating_promedio !== undefined) {
-          const ratingValue = document.querySelector('.rating-value');
-          console.log('[BookRating] Looking for .rating-value:', ratingValue);
-          if (ratingValue) {
-            console.log('[BookRating] Updating .rating-value to:', `${data.rating_promedio.toFixed(1)}/5 (${data.total_valoraciones} votos)`);
-            ratingValue.textContent = `${data.rating_promedio.toFixed(1)}/5 (${data.total_valoraciones} votos)`;
+          const rating = parseInt(btn.dataset.rating, 10);
+          ratingHint.textContent = '⏳ Guardando valoración...';
+          ratingHint.style.color = '#b82db5';
+
+          const response = await fetch(`${apiUrl}/libros/${libroSlug}/valorar`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              puntuacion: rating,
+              calificacion: rating,
+            }),
+          });
+
+          if (response.status === 401) {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+              modal.classList.add('active');
+              const titleEl = document.getElementById('modalTitle');
+              const msgEl = document.getElementById('modalMessage');
+              if (titleEl) titleEl.textContent = 'Sesión expirada';
+              if (msgEl) msgEl.textContent = 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo. 🔐';
+            }
+            return;
           }
-        }
 
-        setTimeout(() => {
-          ratingHint.textContent = 'Haz click para valorar 🌟';
-          ratingHint.style.color = '#b82db5';
-        }, 2500);
-      } catch (error) {
-        console.error('Error al valorar:', error);
-        ratingHint.textContent = '❌ Error al guardar valoración. Intenta de nuevo.';
-        ratingHint.style.color = '#ff4757';
-        setTimeout(() => {
-          ratingHint.textContent = 'Haz click para valorar 🌟';
-          ratingHint.style.color = '#b82db5';
-        }, 2000);
-      }
+          if (!response.ok) throw new Error('Error al valorar');
+
+          const data = await response.json();
+          ratingHint.textContent = `✓ ¡Gracias por tu valoración! ${rating} ⭐`;
+          ratingHint.style.color = '#06a77d';
+
+          starBtns.forEach((b, idx) => {
+            if (idx < rating) {
+              b.classList.add('active');
+              b.style.opacity = '1';
+              b.style.color = '#ff006e';
+            } else {
+              b.classList.remove('active');
+              b.style.opacity = '0.5';
+              b.style.color = '';
+            }
+          });
+
+          if (data.total_valoraciones !== undefined) {
+            const valCount = document.getElementById('valoraciones-count');
+            if (valCount) {
+              valCount.textContent = String(data.total_valoraciones);
+            }
+          }
+
+          if (data.rating_promedio !== undefined) {
+            const ratingValue = document.querySelector('.rating-value');
+            if (ratingValue && data.total_valoraciones !== undefined) {
+              ratingValue.textContent = `${Number(data.rating_promedio).toFixed(1)}/5 (${data.total_valoraciones} votos)`;
+            }
+          }
+
+          dispatchBookUpdate({
+            slug: libroSlug,
+            rating_promedio: data.rating_promedio,
+            total_valoraciones: data.total_valoraciones,
+          });
+
+          setTimeout(() => {
+            ratingHint.textContent = 'Haz click para valorar 🌟';
+            ratingHint.style.color = '#b82db5';
+          }, 2500);
+        } catch (error) {
+          console.error('Error al valorar:', error);
+          ratingHint.textContent = '❌ Error al guardar valoración. Intenta de nuevo.';
+          ratingHint.style.color = '#ff4757';
+          setTimeout(() => {
+            ratingHint.textContent = 'Haz click para valorar 🌟';
+            ratingHint.style.color = '#b82db5';
+          }, 2000);
+        }
+      });
     });
-  });
   });
 </script>

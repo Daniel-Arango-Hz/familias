@@ -109,6 +109,7 @@ try {
 
                 <AuthorActions
                   autorId={autor.id}
+                  autorSlug={autor.slug}
                   autorNombre={autor.nombre}
                   autorEmail={autor.email || autor.correo || autor.usuario?.email || ''}
                   estaSiguiendo={Boolean(autor.siguiendo)}

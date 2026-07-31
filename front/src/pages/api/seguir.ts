@@ -61,9 +61,13 @@ export async function POST({ request }) {
         );
       }
 
+      const totalSeguidores = data.total_seguidores;
       return new Response(
         JSON.stringify({
           siguiendo: data.siguiendo !== false,
+          total_seguidores: typeof totalSeguidores === 'number' || typeof totalSeguidores === 'string'
+            ? Number(totalSeguidores)
+            : undefined,
           success: true,
         }),
         { status: 200 }

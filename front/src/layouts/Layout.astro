@@ -30,6 +30,49 @@ const {
   <body>
     <LoginModal />
     <slot />
+
+    <script>
+      function onReady(callback) {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', callback);
+        } else {
+          callback();
+        }
+      }
+
+      function updateCardCounts(detail) {
+        if (!detail?.slug) return;
+        const cards = document.querySelectorAll(`[data-libro-slug="${detail.slug}"]`);
+        cards.forEach((card) => {
+          if (detail.descargas_total !== undefined) {
+            const descNode = card.querySelector('[data-book-count="descargas"]');
+            if (descNode) {
+              descNode.textContent = String(detail.descargas_total).toLocaleString('es');
+            }
+          }
+
+          if (detail.rating_promedio !== undefined) {
+            const ratingNode = card.querySelector('[data-book-count="rating-value"]');
+            if (ratingNode) {
+              ratingNode.textContent = Number(detail.rating_promedio).toFixed(1);
+            }
+          }
+
+          if (detail.total_valoraciones !== undefined) {
+            const votosNode = card.querySelector('[data-book-count="valoraciones"]');
+            if (votosNode) {
+              votosNode.textContent = `(${detail.total_valoraciones})`;
+            }
+          }
+        });
+      }
+
+      onReady(() => {
+        window.addEventListener('book:update', (event) => {
+          updateCardCounts(event.detail);
+        });
+      });
+    </script>
   </body>
 </html>
 

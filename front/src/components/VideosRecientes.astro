@@ -1,5 +1,5 @@
 ---
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.PUBLIC_API_URL || import.meta.env.API_URL || '/api';
 
 let videos: any[] = [];
 try {
@@ -71,7 +71,7 @@ try {
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                     <circle cx="12" cy="12" r="3"/>
                   </svg>
-                  {video.vistas.toLocaleString('es')}
+                  {Number(video.vistas || 0).toLocaleString('es')} vistas
                 </div>
               </div>
             </div>
@@ -181,6 +181,8 @@ try {
       const mode = e.detail?.mode;
       if (mode === 'video') refreshVideos();
     });
+
+    window.addEventListener('video:updated', () => refreshVideos());
   })();
 </script>
 
@@ -366,8 +368,7 @@ try {
     const videoEl  = document.getElementById('vplayerVideo') as HTMLVideoElement | null;
     const tituloEl = document.getElementById('vplayerTitulo');
     const autorEl  = document.getElementById('vplayerAutor');
-    const API_URL  = (document.querySelector('meta[name="api-url"]') as HTMLMetaElement | null)?.content
-                      || 'http://localhost:3000/api';
+    const API_URL = document.getElementById('videos')?.getAttribute('data-api') || '/api';
 
     function openPlayer(url: string, titulo: string, autor: string, slug: string) {
       if (!modal || !videoEl) return;
@@ -378,8 +379,12 @@ try {
       modal.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
       videoEl.play().catch(() => {});
-      // Registrar vista (fire-and-forget).
-      if (slug) fetch(`${API_URL}/videos/${encodeURIComponent(slug)}`).catch(() => {});
+      // Registrar vista y actualizar el contador en la UI.
+      if (slug) {
+        fetch(`${API_URL}/videos/${encodeURIComponent(slug)}`)
+          .then(() => window.dispatchEvent(new CustomEvent('video:updated', { detail: { slug } })))
+          .catch(() => {});
+      }
     }
 
     function closePlayer() {

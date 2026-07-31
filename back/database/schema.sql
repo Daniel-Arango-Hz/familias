@@ -223,6 +223,15 @@ join public.usuarios u on u.id = t.usuario_id
 left join public.likes_testimonios lt on lt.testimonio_id = t.id
 group by t.id, u.nombre, u.apellido;
 
+-- Vista: videos con conteo de likes
+create or replace view public.videos_con_likes as
+select
+  v.*,
+  count(lv.usuario_id) as total_likes
+from public.videos v
+left join public.likes_videos lv on lv.video_id = v.id
+group by v.id;
+
 
 -- ════════════════════════════════════════════════════════════
 --  FUNCIONES / RPC

@@ -1,0 +1,154 @@
+---
+const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
+---
+
+<style>
+  .admin-wrap { max-width:1100px;margin:2rem auto;padding:1rem }
+  .controls { display:flex;gap:.75rem;align-items:center;margin-bottom:1rem }
+  table { width:100%;border-collapse:collapse }
+  th,td { padding:.5rem;border:1px solid #e5e7eb;font-size:.9rem }
+  pre { white-space:pre-wrap;word-break:break-word;margin:0 }
+  .muted { color:#6b7280 }
+  .btn { padding:.35rem .6rem;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer }
+  .btn.danger { border-color:#f87171;color:#b91c1c }
+  .modal { position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,0.5) }
+  .modal-card { background:#fff;padding:1rem;border-radius:8px;max-width:900px;width:95% }
+</style>
+
+<div class="admin-wrap">
+  <h1>Panel de administración</h1>
+  <p class="muted">Requiere token de administrador en `localStorage.token`.</p>
+
+  <div class="controls">
+    <label for="resource">Recurso:</label>
+    <select id="resource">
+      <option value="libros">Libros</option>
+      <option value="usuarios">Usuarios</option>
+      <option value="testimonios">Testimonios</option>
+      <option value="videos">Videos</option>
+      <option value="autores">Autores</option>
+    </select>
+    <button id="refreshBtn" class="btn">Refrescar</button>
+    <span id="status" class="muted"></span>
+  </div>
+
+  <div id="listContainer"></div>
+
+  <div id="editModal" hidden class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <h3 id="editTitle">Editar</h3>
+      <textarea id="editBody" style="width:100%;height:260px;font-family:monospace"></textarea>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.5rem">
+        <button id="cancelEdit" class="btn">Cancelar</button>
+        <button id="saveEdit" class="btn">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // @ts-nocheck
+  (function(){
+    const api = API_URL;
+    const token = () => localStorage.getItem('token');
+    const statusEl = document.getElementById('status');
+    const resourceSelect = document.getElementById('resource');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const listContainer = document.getElementById('listContainer');
+
+    function setStatus(msg, err){ statusEl.textContent = msg || ''; statusEl.style.color = err ? '#b91c1c' : ''; }
+
+    async function fetchList(){
+      const r = resourceSelect.value;
+      setStatus('Cargando...');
+      try{
+        const res = await fetch(`${api}/admin/${r}?page=1&limit=100`, { headers: token() ? { Authorization: `Bearer ${token()}` } : {} });
+        if (res.status === 401 || res.status === 403) { setStatus('Acceso denegado. Inicia sesión como admin.', true); listContainer.innerHTML=''; return; }
+        const payload = await res.json();
+        renderList(r, payload.data || []);
+        setStatus(`Mostrando ${payload.data?.length || 0}`);
+      }catch(e){ setStatus('Error al obtener datos', true); console.error(e); }
+    }
+
+    function renderList(resource, items){
+      if (!items || !items.length) { listContainer.innerHTML = '<p class="muted">No hay elementos.</p>'; return; }
+      const cols = Object.keys(items[0] || {}).slice(0,6);
+      let html = '<table><thead><tr>' + cols.map(c=>`<th>${c}</th>`).join('') + '<th>Acciones</th></tr></thead><tbody>';
+      for(const it of items){
+        html += '<tr>' + cols.map(c=>`<td><pre>${escapeHtml(String(it[c] ?? ''))}</pre></td>`).join('') +
+          `<td><button class="btn" data-rid="${it.id}" data-res="${resource}">Editar</button> ` +
+          `<button class="btn danger" data-delete="${it.id}" data-res="${resource}">Eliminar</button></td></tr>`;
+      }
+      html += '</tbody></table>';
+      listContainer.innerHTML = html;
+    }
+
+    function escapeHtml(s){ return s.replace(/[&<>]/g, (m)=> ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+
+    // Delegación para botones
+    listContainer.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button'); if (!btn) return;
+      const id = btn.getAttribute('data-rid') || btn.getAttribute('data-delete');
+      const resName = btn.getAttribute('data-res');
+      if (btn.hasAttribute('data-delete')) {
+        if (!confirm('Eliminar elemento? Esta acción no se puede deshacer.')) return;
+        try{
+          const r = await fetch(`${api}/admin/${resName}/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token()}` } });
+          if (!r.ok) { alert('Error al eliminar'); return; }
+          fetchList();
+        }catch(err){ console.error(err); alert('Error'); }
+        return;
+      }
+
+      // Edit
+      try{
+        const r = await fetch(`${api}/admin/${resName}?page=1&limit=1&q=`, { headers: { Authorization: `Bearer ${token()}` } });
+      }catch(e){}
+      // Obtener el item completo (simple approach: re-fetch list and find id)
+      const current = await (async ()=>{
+        const res = await fetch(`${api}/admin/${resName}?page=1&limit=200`, { headers: { Authorization: `Bearer ${token()}` } });
+        const p = await res.json();
+        return (p.data||[]).find(x=>String(x.id)===String(id));
+      })();
+      if (!current) { alert('Elemento no encontrado'); return; }
+      openEditor(resName, id, current);
+    });
+
+    // Editor modal
+    const editModal = document.getElementById('editModal');
+    const editBody = document.getElementById('editBody');
+    const editTitle = document.getElementById('editTitle');
+    const cancelEdit = document.getElementById('cancelEdit');
+    const saveEdit = document.getElementById('saveEdit');
+    let _editContext = null;
+
+    function openEditor(resource, id, data){
+      _editContext = { resource, id };
+      editTitle.textContent = `Editar ${resource} — ${id}`;
+      editBody.value = JSON.stringify(data, null, 2);
+      editModal.hidden = false; editModal.setAttribute('aria-hidden','false');
+    }
+    function closeEditor(){ editModal.hidden = true; editModal.setAttribute('aria-hidden','true'); _editContext=null; }
+
+    cancelEdit.addEventListener('click', ()=> closeEditor());
+    saveEdit.addEventListener('click', async ()=>{
+      if (!_editContext) return;
+      try{
+        const body = JSON.parse(editBody.value);
+        const res = await fetch(`${api}/admin/${_editContext.resource}/${encodeURIComponent(_editContext.id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token()}` },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) { const e = await res.json().catch(()=>({})); alert('Error: '+(e.error||res.status)); return; }
+        closeEditor(); fetchList();
+      }catch(err){ alert('JSON inválido o error al guardar'); console.error(err); }
+    });
+
+    refreshBtn.addEventListener('click', fetchList);
+    resourceSelect.addEventListener('change', fetchList);
+
+    // Inicial
+    setTimeout(()=>fetchList(), 200);
+  })();
+</script>
