@@ -3,7 +3,16 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import CtaFooter from '../components/CtaFooter.astro';
 
-const API_URL =import.meta.env.PUBLIC_API_URL || `${Astro.url.origin}/api`;
+const apiCandidates = [
+  import.meta.env.PUBLIC_API_URL,
+  import.meta.env.API_URL,
+  'http://localhost:3002/api',
+]
+  .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+  .map((value) => value.replace(/\/$/, ''))
+  .filter((value, index, arr) => arr.indexOf(value) === index);
+
+let API_URL = apiCandidates[0] || 'http://localhost:3002/api';
 const filtros = ['Videos', 'Imágenes', 'Testimonios'];
 const filtro = Astro.url.searchParams.get('filtro') || 'Videos';
 
@@ -40,29 +49,45 @@ function prepararItem(item: any) {
   };
 }
 
+async function fetchConFallback(path: string) {
+  let lastError: unknown = null;
+
+  for (const baseUrl of apiCandidates) {
+    try {
+      const res = await fetch(`${baseUrl}${path}`);
+      if (!res.ok) {
+        lastError = new Error(`HTTP ${res.status} en ${baseUrl}${path}`);
+        continue;
+      }
+
+      API_URL = baseUrl;
+      return await res.json();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('No se pudo conectar con el backend.');
+}
+
 try {
   if (filtro === 'Videos') {
-    const res = await fetch(`${API_URL}/videos?limit=12`);
-    if (!res.ok) throw new Error('No se pudieron cargar los videos.');
-    const payload = await res.json();
+    const payload = await fetchConFallback('/videos?limit=12');
     const data = Array.isArray(payload) ? payload : payload.data || [];
     videos = data.map(prepararVideo);
   } else if (filtro === 'Imágenes') {
-    const res = await fetch(`${API_URL}/galeria?tipo=foto&limit=12`);
-    if (!res.ok) throw new Error('No se pudieron cargar las imágenes.');
-    const payload = await res.json();
+    const payload = await fetchConFallback('/galeria?tipo=foto&limit=12');
     const data = Array.isArray(payload) ? payload : payload.data || [];
     items = data.map(prepararItem);
   } else {
-    const res = await fetch(`${API_URL}/galeria?tipo=testimonio&limit=12`);
-    if (!res.ok) throw new Error('No se pudieron cargar los testimonios.');
-    const payload = await res.json();
+    const payload = await fetchConFallback('/galeria?tipo=testimonio&limit=12');
     const data = Array.isArray(payload) ? payload : payload.data || [];
     items = data.map(prepararItem);
   }
 } catch (error) {
-  console.error('Galería error:', error);
-  errorMessage = error instanceof Error ? error.message : 'Fallo al cargar la galería';
+  const detail = error instanceof Error ? error.message : String(error);
+  console.warn(`Galería error: ${detail}`);
+  errorMessage = 'No se pudo cargar la galería en este momento.';
 }
 
 function formatFecha(raw: string) {

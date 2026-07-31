@@ -93,17 +93,57 @@ async function ensureUniqueVideoSlug(baseSlug) {
 router.get('/', optionalAuth, async (req, res) => {
   const { categoria, page = 1, limit = 9 } = req.query;
   const offset = (Number(page) - 1) * Number(limit);
+  const baseVideoFields = 'id, titulo, slug, duracion, vistas, gradiente, emoji, categoria, url, autor_id, created_at';
 
   let q = supabase
     .from('videos_con_likes')
-    .select('id, titulo, slug, duracion, vistas, gradiente, emoji, categoria, url, autor_id, total_likes, created_at', { count: 'exact' })
+    .select(`${baseVideoFields}, total_likes`, { count: 'exact' })
     .eq('publicado', true)
     .order('created_at', { ascending: false })
     .range(offset, offset + Number(limit) - 1);
 
   if (categoria && categoria !== 'Todos') q = q.eq('categoria', categoria);
 
-  const { data: videos, error, count } = await q;
+  let { data: videos, error, count } = await q;
+
+  // Fallback: algunos entornos no tienen creada la vista videos_con_likes.
+  if (error && /videos_con_likes/i.test(error.message || '')) {
+    let qFallback = supabase
+      .from('videos')
+      .select(baseVideoFields, { count: 'exact' })
+      .eq('publicado', true)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + Number(limit) - 1);
+
+    if (categoria && categoria !== 'Todos') qFallback = qFallback.eq('categoria', categoria);
+
+    const { data: rawVideos, error: fallbackError, count: fallbackCount } = await qFallback;
+    if (fallbackError) return res.status(500).json({ error: fallbackError.message });
+
+    const fallbackVideoIds = [...new Set((rawVideos || []).map((v) => v.id).filter(Boolean))];
+    const likesByVideoId = new Map();
+
+    if (fallbackVideoIds.length > 0) {
+      const { data: likesRows, error: likesError } = await supabaseAdmin
+        .from('likes_videos')
+        .select('video_id')
+        .in('video_id', fallbackVideoIds);
+
+      if (likesError) return res.status(500).json({ error: likesError.message });
+
+      for (const row of likesRows || []) {
+        likesByVideoId.set(row.video_id, (likesByVideoId.get(row.video_id) || 0) + 1);
+      }
+    }
+
+    videos = (rawVideos || []).map((video) => ({
+      ...video,
+      total_likes: likesByVideoId.get(video.id) || 0,
+    }));
+    count = fallbackCount;
+    error = null;
+  }
+
   if (error) return res.status(500).json({ error: error.message });
 
   const videoIds = [...new Set((videos || []).map((v) => v.id).filter(Boolean))];
