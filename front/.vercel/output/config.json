@@ -20,6 +20,14 @@
 			"dest": "_render"
 		},
 		{
+			"src": "^/admin/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/api/autor/([^/]+?)/?$",
+			"dest": "_render"
+		},
+		{
 			"src": "^/api/descargar/?$",
 			"dest": "_render"
 		},
@@ -53,10 +61,6 @@
 		},
 		{
 			"src": "^/galeria/?$",
-			"dest": "_render"
-		},
-		{
-			"src": "^/galeria-familiar/?$",
 			"dest": "_render"
 		},
 		{

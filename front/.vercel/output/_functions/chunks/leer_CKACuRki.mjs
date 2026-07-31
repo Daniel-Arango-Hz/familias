@@ -1,7 +1,7 @@
 import { t as __exportAll } from "./rolldown-runtime_D7D4PA-g.mjs";
 import { T as createAstro, _ as defineScriptVars, g as addAttribute, i as renderComponent, m as maybeRenderHead, u as renderTemplate } from "./server_BzieqcK4.mjs";
 import { t as createComponent } from "./compiler_C42j2guM.mjs";
-import { t as $$Layout } from "./Layout_DxCEpPIS.mjs";
+import { t as $$Layout } from "./Layout_DkrXWXQE.mjs";
 //#region src/pages/libro/[slug]/leer.astro
 var leer_exports = /* @__PURE__ */ __exportAll({
 	default: () => $$Leer,

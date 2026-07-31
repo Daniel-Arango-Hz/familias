@@ -1,8 +1,9 @@
 import { t as __exportAll } from "./rolldown-runtime_D7D4PA-g.mjs";
 import { i as renderComponent, m as maybeRenderHead, u as renderTemplate } from "./server_BzieqcK4.mjs";
 import { t as createComponent } from "./compiler_C42j2guM.mjs";
-import { n as renderScript, t as $$Layout } from "./Layout_DxCEpPIS.mjs";
-import { t as $$Header } from "./Header_CxLS-9e8.mjs";
+import { t as renderScript } from "./script_d5et9MFD.mjs";
+import { t as $$Layout } from "./Layout_DkrXWXQE.mjs";
+import { t as $$Header } from "./Header_Do5vNWZK.mjs";
 //#region src/pages/subir-libro.astro
 var subir_libro_exports = /* @__PURE__ */ __exportAll({
 	default: () => $$SubirLibro,

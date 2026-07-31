@@ -1,10 +1,10 @@
 import { t as __exportAll } from "./rolldown-runtime_D7D4PA-g.mjs";
 import { g as addAttribute, i as renderComponent, m as maybeRenderHead, u as renderTemplate } from "./server_BzieqcK4.mjs";
 import { t as createComponent } from "./compiler_C42j2guM.mjs";
-import { t as $$Layout } from "./Layout_DxCEpPIS.mjs";
-import { t as $$Header } from "./Header_CxLS-9e8.mjs";
-import { t as $$CtaFooter } from "./CtaFooter_Dr-dwdrw.mjs";
-import { t as $$BookCard } from "./BookCard_BpfJ-D9W.mjs";
+import { t as $$Layout } from "./Layout_DkrXWXQE.mjs";
+import { t as $$Header } from "./Header_Do5vNWZK.mjs";
+import { t as $$CtaFooter } from "./CtaFooter_Pqn_5hWI.mjs";
+import { t as $$BookCard } from "./BookCard_yWMwnT1h.mjs";
 import { t as libros } from "./libros_CbyaMlUI.mjs";
 //#region src/pages/recursos.astro
 var recursos_exports = /* @__PURE__ */ __exportAll({

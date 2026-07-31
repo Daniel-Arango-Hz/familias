@@ -42,8 +42,10 @@ async function POST({ request }) {
 					details: responseText
 				}), { status: 500 });
 			}
+			const totalSeguidores = data.total_seguidores;
 			return new Response(JSON.stringify({
 				siguiendo: data.siguiendo !== false,
+				total_seguidores: typeof totalSeguidores === "number" || typeof totalSeguidores === "string" ? Number(totalSeguidores) : void 0,
 				success: true
 			}), { status: 200 });
 		}

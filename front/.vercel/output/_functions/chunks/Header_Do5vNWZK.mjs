@@ -1,6 +1,6 @@
 import { g as addAttribute, m as maybeRenderHead, u as renderTemplate } from "./server_BzieqcK4.mjs";
 import { t as createComponent } from "./compiler_C42j2guM.mjs";
-import { n as renderScript } from "./Layout_DxCEpPIS.mjs";
+import { t as renderScript } from "./script_d5et9MFD.mjs";
 //#region src/components/Header.astro
 var $$Header = createComponent(($$result, $$props, $$slots) => {
 	return renderTemplate`${maybeRenderHead($$result)}<header class="header" data-astro-cid-nen7h5rs><div class="container header-inner" data-astro-cid-nen7h5rs><a href="/" class="logo" aria-label="FamiliaLee inicio" data-astro-cid-nen7h5rs><div class="logo-image" data-astro-cid-nen7h5rs><img src="/logos/logo.png" alt="CBI Personitas Biblioteca" data-astro-cid-nen7h5rs></div><span class="logo-text" data-astro-cid-nen7h5rs><span class="logo-line-1" data-astro-cid-nen7h5rs>CBI Personitas</span><span class="logo-line-2" data-astro-cid-nen7h5rs>Biblioteca</span></span></a><nav class="nav" aria-label="Navegación principal" data-astro-cid-nen7h5rs><ul class="nav-list" data-astro-cid-nen7h5rs>${[
