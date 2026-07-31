@@ -1,29 +1,58 @@
 ---
-const API_URL = import.meta.env.PUBLIC_API_URL || import.meta.env.API_URL || '/api';
+const apiCandidates = [
+  import.meta.env.PUBLIC_API_URL,
+  import.meta.env.API_URL,
+  'http://localhost:3000/api',
+  'http://localhost:3002/api',
+]
+  .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+  .map((value) => value.replace(/\/$/, ''))
+  .filter((value, index, arr) => arr.indexOf(value) === index);
+
+let API_URL = apiCandidates[0] || 'http://localhost:3002/api';
+
+async function fetchVideosWithFallback(limit = 3) {
+  let lastError: unknown = null;
+
+  for (const baseUrl of apiCandidates) {
+    try {
+      const res = await fetch(`${baseUrl}/videos?limit=${limit}`);
+      if (!res.ok) {
+        lastError = new Error(`HTTP ${res.status} en ${baseUrl}/videos?limit=${limit}`);
+        continue;
+      }
+
+      API_URL = baseUrl;
+      const payload = await res.json();
+      return Array.isArray(payload) ? payload : (payload.data || []);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('No se pudieron cargar los videos.');
+}
 
 let videos: any[] = [];
 try {
-  const res = await fetch(`${API_URL}/videos?limit=3`);
-  if (res.ok) {
-    const payload = await res.json();
-    const data = Array.isArray(payload) ? payload : (payload.data || []);
-    videos = data.map((video: any) => ({
-      titulo: video.titulo,
-      autor: video.autor_nombre || 'Anónimo',
-      duracion: video.duracion || '00:00',
-      vistas: Number(video.vistas || 0),
-      slug: video.slug,
-      gradiente: video.gradiente || 'linear-gradient(135deg, #1565C0 0%, #42A5F5 100%)',
-      emoji: video.emoji || '🎬',
-      url: video.url || '',
-    }));
-  }
+  const data = await fetchVideosWithFallback(3);
+  videos = data.map((video: any) => ({
+    titulo: video.titulo,
+    autor: video.autor_nombre || 'Anónimo',
+    duracion: video.duracion || '00:00',
+    vistas: Number(video.vistas || 0),
+    slug: video.slug,
+    gradiente: video.gradiente || 'linear-gradient(135deg, #1565C0 0%, #42A5F5 100%)',
+    emoji: video.emoji || '🎬',
+    url: video.url || '',
+  }));
 } catch (error) {
-  console.error('Error al obtener videos recientes:', error);
+  const detail = error instanceof Error ? error.message : String(error);
+  console.warn(`Videos recientes no disponibles: ${detail}`);
 }
 ---
 
-<section class="section" id="videos" data-api={API_URL}>
+<section class="section" id="videos" data-api={API_URL} data-api-candidates={apiCandidates.join(',')}>
   <div class="container">
     <div class="section-header section-header-row">
       <div class="section-header">
@@ -92,6 +121,14 @@ try {
   (() => {
     const section = document.getElementById('videos');
     const apiUrl = section?.getAttribute('data-api') || 'http://localhost:3000/api';
+    const apiCandidates = [
+      ...(section?.getAttribute('data-api-candidates') || '').split(','),
+      apiUrl,
+      'http://localhost:3000/api',
+      'http://localhost:3002/api',
+    ]
+      .map((value) => String(value || '').trim())
+      .filter((value, index, arr) => value.length > 0 && arr.indexOf(value) === index);
     const GRADIENTES = [
       'linear-gradient(135deg,#1565C0,#42A5F5)',
       'linear-gradient(135deg,#B71C1C,#EF9A9A)',
@@ -140,10 +177,15 @@ try {
 
     async function refreshVideos() {
       try {
-        const res = await fetch(`${apiUrl}/videos?limit=3`, { cache: 'no-store' });
-        if (!res.ok) return;
-        const payload = await res.json();
-        const data = Array.isArray(payload) ? payload : (payload.data || []);
+        let data = [];
+
+        for (const baseUrl of apiCandidates) {
+          const res = await fetch(`${baseUrl}/videos?limit=3`, { cache: 'no-store' });
+          if (!res.ok) continue;
+          const payload = await res.json();
+          data = Array.isArray(payload) ? payload : (payload.data || []);
+          break;
+        }
 
         const section = document.getElementById('videos');
         if (!section) return;

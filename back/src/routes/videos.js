@@ -48,6 +48,11 @@ function getVideoExtension(fileName, mimeType) {
   return 'mp4';
 }
 
+function isMissingRelationError(error, relationName) {
+  const message = String(error?.message || '');
+  return message.includes(`public.${relationName}`) || message.includes(relationName);
+}
+
 async function resolveAutorId(usuarioId) {
   if (!usuarioId) return null;
 
@@ -129,7 +134,11 @@ router.get('/', optionalAuth, async (req, res) => {
         .select('video_id')
         .in('video_id', fallbackVideoIds);
 
-      if (likesError) return res.status(500).json({ error: likesError.message });
+      if (likesError) {
+        if (!isMissingRelationError(likesError, 'likes_videos')) {
+          return res.status(500).json({ error: likesError.message });
+        }
+      }
 
       for (const row of likesRows || []) {
         likesByVideoId.set(row.video_id, (likesByVideoId.get(row.video_id) || 0) + 1);
@@ -156,7 +165,11 @@ router.get('/', optionalAuth, async (req, res) => {
       .eq('usuario_id', req.user.id)
       .in('video_id', videoIds);
 
-    if (likesError) return res.status(500).json({ error: likesError.message });
+    if (likesError) {
+      if (!isMissingRelationError(likesError, 'likes_videos')) {
+        return res.status(500).json({ error: likesError.message });
+      }
+    }
     likedSet = new Set((userLikes || []).map((l) => l.video_id));
   }
 

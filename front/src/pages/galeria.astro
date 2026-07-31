@@ -6,19 +6,20 @@ import CtaFooter from '../components/CtaFooter.astro';
 const apiCandidates = [
   import.meta.env.PUBLIC_API_URL,
   import.meta.env.API_URL,
-  'http://localhost:3002/api',
+  'http://localhost:3000/api',
 ]
   .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
   .map((value) => value.replace(/\/$/, ''))
   .filter((value, index, arr) => arr.indexOf(value) === index);
 
-let API_URL = apiCandidates[0] || 'http://localhost:3002/api';
+let API_URL = apiCandidates[0] || 'http://localhost:3000/api';
 const filtros = ['Videos', 'Imágenes', 'Testimonios'];
 const filtro = Astro.url.searchParams.get('filtro') || 'Videos';
 
 let videos: any[] = [];
 let items: any[] = [];
 let errorMessage = '';
+let videoErrorMessage = '';
 
 function prepararVideo(video: any) {
   return {
@@ -86,8 +87,13 @@ try {
   }
 } catch (error) {
   const detail = error instanceof Error ? error.message : String(error);
-  console.warn(`Galería error: ${detail}`);
-  errorMessage = 'No se pudo cargar la galería en este momento.';
+  if (filtro === 'Videos') {
+    console.warn(`Videos error: ${detail}`);
+    videoErrorMessage = 'No se pudieron cargar los videos en este momento.';
+  } else {
+    console.warn(`Galería error: ${detail}`);
+    errorMessage = 'No se pudo cargar la galería en este momento.';
+  }
 }
 
 function formatFecha(raw: string) {
@@ -171,7 +177,7 @@ function formatFecha(raw: string) {
             </div>
           ) : (
             <div class="empty-state">
-              <p>No hay videos disponibles en este momento.</p>
+              <p>{videoErrorMessage || 'No hay videos disponibles en este momento.'}</p>
             </div>
           )
         ) : items.length > 0 ? (
