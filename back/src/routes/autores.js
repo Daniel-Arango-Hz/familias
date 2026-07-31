@@ -97,7 +97,7 @@ router.get('/:slug', optionalAuth, async (req, res) => {
 router.post('/:id/seguir', requireAuth, async (req, res) => {
   const { id } = req.params;
 
-  const { data: existe, error: existeError } = await supabase
+  const { data: existe, error: existeError } = await supabaseAdmin
     .from('seguidores_autor')
     .select('autor_id')
     .eq('seguidor_id', req.user.id)
@@ -134,9 +134,9 @@ router.post('/:id/seguir', requireAuth, async (req, res) => {
     siguiendo = true;
   }
 
-  // Obtener datos actualizados del autor
+  // Obtener datos actualizados del autor desde la vista con stats calculados
   const { data: autorActualizado, error: autorError } = await supabaseAdmin
-    .from('autores')
+    .from('autores_completos')
     .select('total_seguidores')
     .eq('id', id)
     .single();
