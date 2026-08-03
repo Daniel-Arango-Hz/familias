@@ -10,6 +10,7 @@ import autoresRoutes from './routes/autores.js';
 import videosRoutes from './routes/videos.js';
 import galeriaRoutes from './routes/galeria.js';
 import usuariosRoutes from './routes/usuarios.js';
+import estadisticasRoutes from './routes/estadisticas.js';
 import uploadRoutes from './routes/upload.js';
 import adminRoutes from './routes/admin.js';
 
@@ -45,6 +46,7 @@ app.use('/api/autores', autoresRoutes);
 app.use('/api/videos', videosRoutes);
 app.use('/api/galeria', galeriaRoutes);
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/estadisticas', estadisticasRoutes);
 app.use('/api/admin', adminRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────

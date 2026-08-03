@@ -48,6 +48,8 @@ router.get('/', optionalAuth, async (req, res) => {
       .order('created_at', { ascending: false });
   } else if (orden === 'nuevo') {
     query_builder = query_builder.eq('nuevo', true);
+  } else if (orden === 'fecha_publicacion' || orden === 'ultimo') {
+    query_builder = query_builder.order('fecha_publicacion', { ascending: false });
   } else if (orden === 'descargas') {
     query_builder = query_builder.order('descargas_total', { ascending: false });
   } else if (orden === 'rating') {
