@@ -6,15 +6,42 @@ const router = Router();
 
 // Recursos permitidos y la tabla/vista a la que mapean
 const RESOURCE_MAP = {
-  libros: { table: 'libros_completos' },
-  usuarios: { table: 'usuarios' },
-  testimonios: { table: 'testimonios' },
-  videos: { table: 'videos' },
-  autores: { table: 'autores' },
+  libros: {
+    listTable: 'libros',
+    writeTable: 'libros',
+    searchFields: ['titulo', 'slug', 'descripcion'],
+  },
+  usuarios: {
+    listTable: 'usuarios',
+    writeTable: 'usuarios',
+    searchFields: ['email', 'nombre', 'apellido'],
+  },
+  testimonios: {
+    listTable: 'testimonios',
+    writeTable: 'testimonios',
+    searchFields: ['nombre_familia', 'texto'],
+  },
+  videos: {
+    listTable: 'videos',
+    writeTable: 'videos',
+    searchFields: ['titulo', 'slug', 'categoria'],
+  },
+  autores: {
+    listTable: 'autores',
+    writeTable: 'autores',
+    searchFields: ['bio', 'bio_corta', 'especialidad'],
+  },
 };
 
 function ensureResource(name) {
   return RESOURCE_MAP[name] || null;
+}
+
+function buildSearchQuery(builder, resource, q) {
+  const config = ensureResource(resource);
+  if (!config?.searchFields?.length) return builder;
+  const searchExpression = config.searchFields.map((field) => `${field}.ilike.%${q}%`).join(',');
+  return builder.or(searchExpression);
 }
 
 // ─── GET /admin/:resource ───────────────────────────────────────────────────
@@ -30,15 +57,10 @@ router.get('/:resource', requireAuth, requireAdmin, async (req, res) => {
   const q = String(req.query.q || '').trim();
 
   try {
-    let builder = supabaseAdmin.from(map.table).select('*', { count: 'exact' }).range(offset, offset + limit - 1);
+    let builder = supabaseAdmin.from(map.listTable).select('*', { count: 'exact' }).range(offset, offset + limit - 1);
 
-    // Búsqueda simple sobre columnas comunes
     if (q) {
-      if (resource === 'libros') builder = builder.or(`titulo.ilike.%${q}%,autor_nombre.ilike.%${q}%,descripcion.ilike.%${q}%`);
-      else if (resource === 'usuarios') builder = builder.or(`email.ilike.%${q}%,nombre.ilike.%${q}%,apellido.ilike.%${q}%`);
-      else if (resource === 'testimonios') builder = builder.or(`texto.ilike.%${q}%,nombre_familia.ilike.%${q}%`);
-      else if (resource === 'videos') builder = builder.or(`titulo.ilike.%${q}%,autor_nombre.ilike.%${q}%`);
-      else if (resource === 'autores') builder = builder.or(`nombre.ilike.%${q}%`);
+      builder = buildSearchQuery(builder, resource, q);
     }
 
     const { data, error, count } = await builder.order('created_at', { ascending: false });
@@ -58,8 +80,9 @@ router.patch('/:resource/:id', requireAuth, requireAdmin, async (req, res) => {
   if (!map) return res.status(400).json({ error: 'Recurso no permitido' });
 
   try {
+    const writeTable = map.writeTable || map.listTable;
     const { data, error } = await supabaseAdmin
-      .from(map.table)
+      .from(writeTable)
       .update({ ...req.body, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
@@ -80,7 +103,8 @@ router.delete('/:resource/:id', requireAuth, requireAdmin, async (req, res) => {
   if (!map) return res.status(400).json({ error: 'Recurso no permitido' });
 
   try {
-    const { error } = await supabaseAdmin.from(map.table).delete().eq('id', id);
+    const writeTable = map.writeTable || map.listTable;
+    const { error } = await supabaseAdmin.from(writeTable).delete().eq('id', id);
     if (error) return res.status(400).json({ error: error.message });
     res.status(204).send();
   } catch (err) {
