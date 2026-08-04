@@ -49,7 +49,8 @@ router.get('/', optionalAuth, async (req, res) => {
   } else if (orden === 'nuevo') {
     query_builder = query_builder.eq('nuevo', true);
   } else if (orden === 'fecha_publicacion' || orden === 'ultimo') {
-    query_builder = query_builder.order('fecha_publicacion', { ascending: false });
+    // No existe la columna fecha_publicacion en la tabla, así que usamos created_at para el libro más reciente.
+    query_builder = query_builder.order('created_at', { ascending: false });
   } else if (orden === 'descargas') {
     query_builder = query_builder.order('descargas_total', { ascending: false });
   } else if (orden === 'rating') {

@@ -15,6 +15,7 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
     <a href={`/libro/${libro.slug}`} class="book-card-link" aria-label={`Ver ${libro.titulo}`}>
       <div class="book-cover" style={`background: ${libro.portadaGradiente}`}>
         {libro.destacado && <span class="badge badge-destacado">Destacado</span>}
+        <span class="pages-bubble">{libro.paginas ?? (libro.paginasContenido?.length ?? '')} págs.</span>
         {isImageCover ? (
           <img class="cover-image" src={libro.portadaIcono} alt={`Portada de ${libro.titulo}`} loading="lazy" />
         ) : (
@@ -22,37 +23,38 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
         )}
         <div class="cover-title-overlay">
           <p class="cover-titulo">{libro.titulo}</p>
-          <p class="cover-autor">{libro.autor}</p>
         </div>
       </div>
+
       <div class="book-info">
-        <p class="book-autor">{libro.autor}</p>
+        <p class="book-eyebrow">{(libro.categorias && libro.categorias.length) ? libro.categorias[0] : 'Familia'}</p>
         <h3 class="book-titulo">{libro.titulo}</h3>
-        <div class="book-tags">
-          {libro.categorias.map((cat) => <span class="badge">{cat}</span>)}
-        </div>
-        <div class="book-meta">
-          <div class="star-rating" data-book-count="rating">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-            <span data-book-count="rating-value">{libro.rating}</span> <span data-book-count="valoraciones">({libro.votos})</span>
+        <p class="book-subtitle">{libro.familiaInfo || `${libro.autor}`}</p>
+
+        <div class="book-footer">
+          <div class="book-stats">
+            <div class="stat stat-rating" title="Valoración">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 .587l3.668 7.431L23.4 9.587l-5.7 5.556L18.9 23.4 12 19.771 5.1 23.4l1.2-8.257L.6 9.587l7.732-1.569z"/>
+              </svg>
+              <span>{(typeof libro.rating === 'number' ? libro.rating.toFixed(1) : (libro.votos ?? 0)).toString()}</span>
+            </div>
+            <div class="stat stat-downloads" title="Descargas">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>{(libro.descargas ?? 0).toLocaleString('es')}</span>
+            </div>
           </div>
-          <div class="book-descargas" data-book-count="descargas">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
+
+          <div class="book-cta">
+            <span class="leer">Leer</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            {libro.descargas.toLocaleString('es')}
           </div>
-        </div>
-        <div class="book-edad">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <rect x="3" y="4" width="13" height="16" rx="2"/>
-            <path d="M7 8h5M7 12h5M7 16h3" stroke-linecap="round"/>
-          </svg>
-          {libro.edadRango}
         </div>
       </div>
     </a>
@@ -66,6 +68,7 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
         ) : (
           <span class="h-cover-icon">{libro.portadaIcono}</span>
         )}
+        <span class="pages-bubble-small">{libro.paginas ?? (libro.paginasContenido?.length ?? '')} págs.</span>
       </div>
       <div class="book-h-info">
         <p class="book-autor">{libro.autor}</p>
@@ -74,22 +77,10 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
           {libro.categorias.map((cat) => <span class="badge">{cat}</span>)}
           <span class="badge">{libro.edadRango}</span>
         </div>
-        <div class="book-meta">
-          <div class="star-rating" data-book-count="rating">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-            <span data-book-count="rating-value">{libro.rating}</span>
-          </div>
-          <div class="book-descargas" data-book-count="descargas">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            {libro.descargas.toLocaleString('es')}
-          </div>
-        </div>
+      </div>
+      <div class="book-h-meta">
+        <div class="stat stat-rating">⭐ {(typeof libro.rating === 'number' ? libro.rating.toFixed(1) : (libro.votos ?? 0)).toString()}</div>
+        <div class="stat stat-downloads">⬇️ {(libro.descargas ?? 0).toLocaleString('es')}</div>
       </div>
     </a>
   </article>
@@ -185,6 +176,49 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   }
 
+  .badge-destacado {
+    background: #ff7a3f;
+    color: #fff;
+    font-weight: 800;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    display: inline-block;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 3;
+    box-shadow: 0 6px 12px rgba(255, 110, 60, 0.12);
+  }
+
+  .pages-bubble {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #fff;
+    color: #333;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    z-index: 3;
+  }
+
+  .pages-bubble-small {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255,255,255,0.95);
+    color: #333;
+    padding: 0.25rem 0.45rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    z-index: 3;
+  }
+
   .cover-autor {
     font-size: 0.78rem;
     color: rgba(255, 255, 255, 0.9);
@@ -198,6 +232,51 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
+  }
+
+  .book-eyebrow {
+    color: #ff6c3f;
+    font-weight: 800;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .book-subtitle {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+  }
+
+  .book-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.6rem;
+  }
+
+  .book-stats {
+    display: flex;
+    gap: 0.9rem;
+    align-items: center;
+  }
+
+  .stat {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    color: var(--color-text-muted);
+    font-weight: 700;
+    font-size: 0.92rem;
+  }
+
+  .book-cta {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+    color: #ff6c3f;
+    font-weight: 800;
   }
 
   .book-autor {
@@ -445,6 +524,16 @@ const isImageCover = typeof libro.portadaIcono === 'string' && /^https?:\/\//i.t
     flex-direction: column;
     gap: 0.4rem;
     min-width: 0;
+  }
+
+  .book-h-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-end;
+    color: var(--color-text-muted);
+    font-weight: 700;
+    min-width: 56px;
   }
 
   @media (max-width: 640px) {

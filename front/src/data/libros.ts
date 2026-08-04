@@ -21,6 +21,9 @@ export interface Libro {
   anio: number;
   portadaGradiente: string;
   portadaIcono: string;
+  familiaInfo?: string;
+  likes?: number;
+  vistas?: number;
   paginasContenido: PaginaLibro[];
 }
 

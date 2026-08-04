@@ -34,6 +34,14 @@ async function fetchVideosWithFallback(limit = 3) {
 }
 
 let videos: any[] = [];
+
+function formatShortDate(raw) {
+  if (!raw) return '';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+}
+
 try {
   const data = await fetchVideosWithFallback(3);
   videos = data.map((video: any) => ({
@@ -45,6 +53,7 @@ try {
     gradiente: video.gradiente || 'linear-gradient(135deg, #1565C0 0%, #42A5F5 100%)',
     emoji: video.emoji || '🎬',
     url: video.url || '',
+    fecha: formatShortDate(video.created_at || video.published_at || video.fecha),
   }));
 } catch (error) {
   const detail = error instanceof Error ? error.message : String(error);
@@ -55,9 +64,10 @@ try {
 <section class="section" id="videos" data-api={API_URL} data-api-candidates={apiCandidates.join(',')}>
   <div class="container">
     <div class="section-header section-header-row">
-      <div class="section-header">
-        <h2>Videos Recientes</h2>
-        <p>Recursos audiovisuales para la devoción familiar</p>
+      <div>
+        <p class="eyebrow">GALERÍA</p>
+        <h2>Videos compartidos</h2>
+        <p>Momentos únicos e irrepetibles capturados por nuestras familias durante las actividades del CBI.</p>
       </div>
       <div class="section-actions">
         <a href="/galeria" class="ver-mas">Ver galería →</a>
@@ -83,12 +93,29 @@ try {
             data-video-slug={video.slug}
           >
             <div class="video-thumb" style={`background: ${video.gradiente}`} aria-hidden="true">
+              <img class="video-thumb-img" data-slug={video.slug} alt={video.titulo} style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; inset:0;" />
               <span class="video-emoji">{video.emoji}</span>
               <span class="video-duration">{video.duracion}</span>
-              <div class="video-play">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <polygon points="5 3 19 12 5 21 5 3"/>
-                </svg>
+              <div class="video-play centered">
+                <div class="play-circle">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="#FF6C3F" aria-hidden="true">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="video-overlay" aria-hidden="true">
+                <div class="overlay-left">
+                  <div class="overlay-title">{video.titulo}</div>
+                  <div class="overlay-sub">{video.autor}</div>
+                </div>
+                <div class="overlay-right">
+                  <div class="overlay-stats">
+                    <span class="ov-icon">❤</span>
+                    <span class="ov-count">{Number(video.vistas || 0).toLocaleString('es')}</span>
+                    <span class="ov-sep">•</span>
+                    <span class="ov-date">{video.fecha}</span>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="video-info">
@@ -155,20 +182,37 @@ try {
             data-video-autor="${esc(video.autor_nombre || 'Anónimo')}"
             data-video-slug="${esc(video.slug)}">
             <div class="video-thumb" style="position:relative;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;background:${esc(gradiente)};overflow:hidden">
-              <span style="font-size:2.5rem;opacity:.45;pointer-events:none">${esc(video.emoji || '🎬')}</span>
+              <img class="video-thumb-img" data-slug="${esc(video.slug)}" alt="${esc(video.titulo)}" style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; inset:0;" />
+              <span style="font-size:2.5rem;opacity:.45;pointer-events:none" class="video-emoji">${esc(video.emoji || '🎬')}</span>
               ${duracion}
-              <div style="position:absolute;width:48px;height:48px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s" class="video-play">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="#0d2240"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <div class="video-play centered">
+                <div class="play-circle">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="#FF6C3F"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+              </div>
+              <div class="video-overlay" aria-hidden="true">
+                <div class="overlay-left">
+                  <div class="overlay-title">${esc(video.titulo)}</div>
+                  <div class="overlay-sub">${esc(video.autor || video.autor_nombre || 'Anónimo')}</div>
+                </div>
+                <div class="overlay-right">
+                  <div class="overlay-stats">
+                    <span class="ov-icon">❤</span>
+                    <span class="ov-count">${Number(video.vistas || 0).toLocaleString('es')}</span>
+                    <span class="ov-sep">•</span>
+                    <span class="ov-date">${esc((video.fecha) || '')}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div style="padding:1rem;display:flex;flex-direction:column;gap:.5rem">
-              <h3 style="font-size:1rem;font-weight:700;color:#0d2240;line-height:1.3;margin:0">${esc(video.titulo)}</h3>
-              <div style="display:flex;align-items:center;justify-content:space-between;font-size:.85rem;color:#6b7280">
+            <div class="video-info">
+              <h3 class="video-titulo">${esc(video.titulo)}</h3>
+              <div class="video-meta">
                 <span>${esc(video.autor_nombre || 'Anónimo')}</span>
-                <span style="display:flex;align-items:center;gap:.3rem">
+                <div style="display:flex;align-items:center;gap:.3rem">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   ${Number(video.vistas || 0).toLocaleString('es')}
-                </span>
+                </div>
               </div>
             </div>
           </button>
@@ -215,7 +259,82 @@ try {
         }
 
         grid.innerHTML = data.map(buildCard).join('');
+        // after rendering, attempt to load thumbnails for each card
+        requestAnimationFrame(() => {
+          document.querySelectorAll('.video-thumb-img').forEach((img) => {
+            const slug = img.getAttribute('data-slug');
+            const thumbContainer = img.closest('.video-thumb');
+            if (!slug || !thumbContainer) return;
+            loadThumbnailForCard(slug, img, thumbContainer);
+          });
+        });
       } catch (_) {}
+    }
+
+    // Try to load a thumbnail for a given video slug into the img element.
+    async function loadThumbnailForCard(slug, imgEl, container) {
+      const api = apiCandidates[0] || '/api';
+      const tryUrl = `${api}/videos/${encodeURIComponent(slug)}/thumbnail.jpg`;
+
+      function markLoaded(dataUrl) {
+        imgEl.src = dataUrl;
+        imgEl.style.display = 'block';
+        // add class to container to animate emoji out
+        container.classList.add('loaded');
+      }
+
+      try {
+        // Try fetching a server-provided thumbnail first
+        const head = await fetch(tryUrl, { method: 'HEAD' });
+        if (head.ok) {
+          markLoaded(tryUrl);
+          return;
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // Fallback: try to extract a frame from the video URL
+      try {
+        const videoUrl = (() => {
+          const btn = container.closest('.video-card')?.querySelector('[data-video-url]');
+          return btn ? btn.getAttribute('data-video-url') : null;
+        })();
+        if (!videoUrl) return;
+
+        const v = document.createElement('video');
+        v.crossOrigin = 'anonymous';
+        v.muted = true;
+        v.preload = 'metadata';
+        v.src = videoUrl;
+
+        await new Promise((resolve, reject) => {
+          const onLoaded = () => resolve(null);
+          const onErr = () => reject(new Error('error loading video'));
+          v.addEventListener('loadeddata', onLoaded, { once: true });
+          v.addEventListener('error', onErr, { once: true });
+        });
+
+        // seek to 1s if possible
+        try {
+          v.currentTime = Math.min(1, Math.max(0.1, (v.duration || 1) * 0.1));
+          await new Promise((resolve) => v.addEventListener('seeked', resolve, { once: true }));
+        } catch (_) {}
+
+        const canvas = document.createElement('canvas');
+        canvas.width = v.videoWidth || 640;
+        canvas.height = v.videoHeight || 360;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg');
+          markLoaded(dataUrl);
+        }
+        v.src = '';
+      } catch (err) {
+        // leave emoji if failed
+        return;
+      }
     }
 
     window.addEventListener('community:uploaded', (e) => {
@@ -225,163 +344,308 @@ try {
     });
 
     window.addEventListener('video:updated', () => refreshVideos());
+
+    // Attempt to load thumbnails for server-rendered cards on first paint
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.video-thumb-img').forEach((img) => {
+        const slug = img.getAttribute('data-slug');
+        const thumbContainer = img.closest('.video-thumb');
+        if (!slug || !thumbContainer) return;
+        loadThumbnailForCard(slug, img, thumbContainer);
+      });
+    });
   })();
 </script>
 
 <style is:global>
+  #videos {
+    position: relative;
+   
+    padding-bottom: 3rem;
+    overflow: hidden;
+    background: linear-gradient(180deg, #fffaf5 0%, #fff1e6 100%);
+  }
+
+  #videos::before {
+    content: '';
+    position: absolute;
+    top: -3rem;
+    right: -4rem;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 167, 97, 0.18), transparent 58%);
+    filter: blur(10px);
+  }
+
+  #videos::after {
+    content: '';
+    position: absolute;
+    bottom: -2.5rem;
+    left: -3rem;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 220, 192, 0.2), transparent 60%);
+    filter: blur(12px);
+  }
+
+  #videos .eyebrow {
+    display: inline-flex;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    font-size: 0.75rem;
+    color: #d96927;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+  }
+
+  #videos .section-header h2 {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+    margin-bottom: 0.75rem;
+  }
+
+  #videos .section-header p {
+    color: #5d5046;
+    line-height: 1.75;
+    max-width: 520px;
+  }
+
+  #videos .section-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  #videos .upload-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  #videos .upload-btn,
+  #videos .ver-mas {
+    border-radius: 999px;
+    padding: 0.9rem 1.25rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+  }
+
+  #videos .upload-btn {
+    background: #ff6c3f;
+    color: #fff;
+  }
+
+  #videos .upload-btn:hover {
+    background: #e5562f;
+  }
+
   #videos .videos-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.5rem;
   }
 
   #videos .video-card {
-    background: var(--color-white);
-    border-radius: var(--radius-lg);
+    background: #fff;
+    border-radius: 1.5rem;
     overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--color-border);
-    transition: box-shadow 0.25s, transform 0.25s;
+    border: 1px solid rgba(255, 164, 101, 0.22);
+    box-shadow: 0 18px 46px rgba(255, 110, 63, 0.12);
+    transition: transform 0.25s, box-shadow 0.25s;
   }
 
   #videos .video-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-3px);
-  }
-
-  #videos .video-card:hover .video-play {
-    opacity: 1;
+    transform: translateY(-4px);
+    box-shadow: 0 22px 55px rgba(255, 109, 63, 0.13);
   }
 
   #videos .video-card-link {
     display: flex;
     flex-direction: column;
     width: 100%;
-    background: none;
-    border: none;
-    cursor: pointer;
     text-align: left;
-    padding: 0;
   }
 
   #videos .video-thumb {
-    position: relative; aspect-ratio: 16/9;
-    display: flex; align-items: center; justify-content: center;
-  }
-  #videos .video-emoji {
-    font-size: 2.5rem; opacity: 0.5; pointer-events: none;
+    position: relative;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    overflow: hidden;
   }
 
-  #videos .video-duration {
-    position: absolute;
-    bottom: 0.6rem;
-    right: 0.6rem;
-    background: rgba(0,0,0,0.75);
-    color: #fff;
-    font-size: 0.78rem;
-    font-weight: 600;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
+  #videos .video-emoji {
+    font-size: 3rem;
+    opacity: 0.75;
   }
 
   #videos .video-play {
     position: absolute;
-    width: 48px;
-    height: 48px;
-    background: rgba(255,255,255,0.9);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-navy);
-    opacity: 0;
-    transition: opacity 0.2s;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+
+  #videos .video-play.centered .play-circle {
+    width: 96px;
+    height: 96px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.95);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow: 0 10px 30px rgba(13,34,64,0.12);
+    transition: transform .18s ease, opacity .18s ease;
+    opacity: 0.98;
+  }
+
+  #videos .video-card:hover .video-play.centered .play-circle {
+    transform: scale(1.02);
+  }
+
+  #videos .video-duration {
+    position: absolute;
+    bottom: 0.9rem;
+    right: 0.9rem;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
   }
 
   #videos .video-info {
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    display: none;
   }
 
   #videos .video-titulo {
-    font-family: var(--font-serif);
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    color: var(--color-navy);
-    line-height: 1.3;
+    margin-bottom: 0.55rem;
+    color: #2d2d2d;
   }
 
   #videos .video-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
+    color: #7c6b5f;
+    font-size: 0.9rem;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
+
+  /* reveal info on hover */
+  #videos .video-card:hover .video-info {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* show play icon on hover */
+  #videos .video-card:hover .video-play {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* thumbnail image styles */
+  #videos .video-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    transition: opacity .22s ease;
+  }
+
+  #videos .video-thumb.loaded .video-thumb-img {
+    opacity: 1;
+  }
+
+  #videos .video-thumb .video-emoji {
+    z-index: 2;
+    transition: opacity .18s ease, transform .18s ease;
+  }
+
+  #videos .video-thumb.loaded .video-emoji {
+    opacity: 0;
+    transform: scale(.9);
+  }
+
+  /* overlay at bottom similar to the provided design */
+  #videos .video-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 45%, rgba(0,0,0,0.75) 100%);
+    color: #fff;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    transform: translateY(12px);
+    opacity: 0;
+    transition: transform .22s ease, opacity .22s ease;
+    pointer-events: none;
+  }
+
+  #videos .video-card:hover .video-overlay {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #videos .overlay-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  #videos .overlay-sub {
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+
+  #videos .overlay-stats {
+    display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;color:#fff;opacity:0.95
+  }
+
+  #videos .ov-icon{opacity:.95}
+
+  #videos .ov-count{font-weight:700}
 
   #videos .video-vistas {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-
-  #videos .section-actions {
-    display: flex;
-    align-items: flex-end;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  #videos .upload-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  #videos .upload-btn {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    padding: 0.45rem 0.8rem;
-    border-radius: 999px;
-    border: 1px solid var(--color-border);
-    background: var(--color-white);
-    color: var(--color-text-muted);
-    font-size: 0.82rem;
-    font-weight: 600;
-    transition: all 0.2s;
-    cursor: pointer;
-    font-family: var(--font-sans);
+    gap: 0.35rem;
   }
 
-  #videos .upload-btn:hover {
-    border-color: var(--color-navy);
-    color: var(--color-navy);
+  @media (max-width: 960px) {
+    #videos .videos-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 720px) {
+    #videos .section-actions,
+    #videos .section-header.section-header-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
     #videos .videos-grid {
       grid-template-columns: 1fr;
     }
-
-    #videos .section-actions,
-    #videos .upload-actions {
-      justify-content: flex-start;
-    }
-  }
-
-  #videos .empty-videos {
-    background: var(--color-white);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: 1.25rem;
-    color: var(--color-text-muted);
-    text-align: center;
   }
 </style>
 

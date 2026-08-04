@@ -1,295 +1,429 @@
 ---
+const SITE_URL = import.meta.env.SITE || 'http://localhost:3000';
+const API_BASE = import.meta.env.PUBLIC_API_URL || '/api';
+const API_URL = API_BASE.startsWith('http')
+  ? API_BASE.replace(/\/$/, '')
+  : new URL(API_BASE, SITE_URL).toString();
+
+let latestLibro: any = null;
+let stats = {
+  libros_subidos: 0,
+  fotos: 0,
+  videos: 0,
+  testimonios: 0,
+  usuarios: 0,
+};
+
+try {
+  const [librosRes, statsRes] = await Promise.all([
+    fetch(`${API_URL}/libros?page=1&limit=1`),
+    fetch(`${API_URL}/estadisticas`),
+  ]);
+
+  if (!librosRes.ok) {
+    const errorPayload = await librosRes.text();
+    console.error('Error al obtener el último libro:', librosRes.status, errorPayload);
+  } else {
+    const payload = await librosRes.json();
+    latestLibro = Array.isArray(payload)
+      ? payload[0]
+      : payload?.data?.[0] || payload?.[0] || null;
+  }
+
+  if (!statsRes.ok) {
+    const errorPayload = await statsRes.text();
+    console.error('Error al obtener estadísticas del hero:', statsRes.status, errorPayload);
+  } else {
+    stats = await statsRes.json();
+  }
+} catch (error) {
+  console.error('Error al cargar hero dinámico:', error);
+}
 ---
 
 <section class="hero">
   <div class="container hero-inner">
-    <div class="hero-badge">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="3" y="4" width="13" height="16" rx="2" stroke="#c8872a" stroke-width="2"/>
-        <path d="M7 8h5M7 12h5M7 16h3" stroke="#c8872a" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-      Biblioteca Digital para Familias
+    <div class="hero-shapes" aria-hidden="true">
+      <span class="shape shape-glow"></span>
+      <span class="shape shape-ring"></span>
+      <span class="shape shape-dot"></span>
     </div>
+    <div class="hero-copy">
+      <span class="hero-badge">Espacio familiar del CBI Personitas</span>
+      <h1>Historias que <span>crecen</span> junto a tus <span>pequeños</span></h1>
+      <p>Un espacio donde las familias del CBI Personitas comparten los libros interactivos que crean con sus hijos, junto con fotos, videos y recuerdos de cada actividad especial.</p>
 
-    <h1 class="hero-title">
-      Recursos que<br />
-      <span class="hero-title-highlight">nutren</span> la unión de las familiar
-    </h1>
+      <div class="hero-actions">
+        <a href="/biblioteca" class="btn btn-primary">Ver libros</a>
+        <a href="/galeria" class="btn btn-secondary">Ver galería</a>
+      </div>
 
-    <p class="hero-desc">
-      Libros, cuentos, guías y recursos educativos creados por autores y familias para
-      fortalecer el hogar.
-    </p>
-
-    <form class="hero-search" action="/buscar" method="get" role="search">
-      <label for="hero-search-input" class="sr-only">Buscar contenido</label>
-      <svg class="hero-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input
-        id="hero-search-input"
-        type="search"
-        name="q"
-        class="hero-search-input"
-        placeholder="Buscar libros, autores, categorías..."
-        autocomplete="off"
-      />
-      <button type="submit" class="hero-search-btn">Buscar</button>
-    </form>
-
-    <div class="hero-actions">
-      <a href="#biblioteca" class="btn-gold">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <rect x="3" y="4" width="13" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
-          <path d="M7 8h5M7 12h5M7 16h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        Explorar biblioteca
-      </a>
-      <a href="/subir-libro" class="btn-ghost js-require-login-upload">
-        Publicar contenido
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path d="M5 12h14M12 5l7 7-7 7"/>
-        </svg>
-      </a>
-    </div>
-
-    <div class="hero-stats">
-      <div class="hero-stat">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-          <rect x="3" y="4" width="13" height="16" rx="2"/>
-          <path d="M7 8h5M7 12h5M7 16h3" stroke-linecap="round"/>
-        </svg>
-        <div>
-          <strong>200+</strong>
-          <span>Libros disponibles</span>
+      <div class="hero-stats">
+        <div class="stat-card">
+          <strong>{stats.libros_subidos?.toLocaleString('es')}</strong>
+          <span>Libros subidos</span>
+        </div>
+        <div class="stat-card">
+          <strong>{stats.fotos?.toLocaleString('es')}</strong>
+          <span>Fotos</span>
+        </div>
+        <div class="stat-card">
+          <strong>{stats.videos?.toLocaleString('es')}</strong>
+          <span>Videos</span>
+        </div>
+        <div class="stat-card">
+          <strong>{stats.testimonios?.toLocaleString('es')}</strong>
+          <span>Testimonios</span>
+        </div>
+        <div class="stat-card">
+          <strong>{stats.usuarios?.toLocaleString('es')}</strong>
+          <span>Usuarios registrados</span>
         </div>
       </div>
-      <div class="hero-stat">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-        <div>
-          <strong>50+</strong>
-          <span>Autores activos</span>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-card">
+        <div class="hero-card-header">
+          <span class="hero-card-badge">Último libro publicado</span>
+          <span class="hero-card-label">{latestLibro?.autor_nombre ?? latestLibro?.autor ?? 'Familia CBI'}</span>
         </div>
-      </div>
-      <div class="hero-stat">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        <div>
-          <strong>12.000+</strong>
-          <span>Descargas totales</span>
+        <div class="hero-card-illustration" aria-hidden="true">
+          <div class="book-illustration" style={`background: ${latestLibro?.portada_gradiente || 'linear-gradient(135deg, #ffe8d1 0%, #ffc38b 100%)'}`}>
+            {typeof latestLibro?.portada_icono === 'string' && /^(https?:)?\/\//i.test(latestLibro.portada_icono) ? (
+              <img src={latestLibro.portada_icono} alt={latestLibro?.titulo ?? 'Portada del libro'} />
+            ) : (
+              <span>{latestLibro?.portada_icono || '📚'}</span>
+            )}
+          </div>
+        </div>
+        <div class="hero-card-body">
+          <p class="hero-card-title">{latestLibro?.titulo ?? 'Libro comunitario'}</p>
+          <div class="hero-card-meta">
+            <span>{latestLibro?.categorias?.[0] ?? 'Categoría general'}</span>
+            <span>{Number(latestLibro?.paginas ?? latestLibro?.paginas_total ?? 0)} págs</span>
+            <span>⭐ {Number(latestLibro?.rating_promedio ?? latestLibro?.rating ?? 0).toFixed(1)}</span>
+          </div>
+          <p class="hero-card-copy">{latestLibro?.descripcion ?? 'Descubre una historia creada por nuestra comunidad familiar.'}</p>
+        </div>
+        <div class="hero-card-footer">
+          <div>
+            <strong>{Number(latestLibro?.descargas_total ?? latestLibro?.descargas ?? 0).toLocaleString('es')}</strong>
+            <span>Descargas</span>
+          </div>
+          <div class="hero-card-pill">{latestLibro?.categorias?.[0] ?? 'Libro nuevo'}</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const publishBtn = document.querySelector('.js-require-login-upload');
-
-    publishBtn?.addEventListener('click', (e) => {
-      const token = localStorage.getItem('token');
-      if (token) return;
-
-      e.preventDefault();
-
-      const modal = document.getElementById('loginModalOverlay');
-      const titleEl = document.getElementById('modalTitle');
-      const msgEl = document.getElementById('modalMessage');
-
-      if (titleEl) titleEl.textContent = 'Inicio de sesión requerido';
-      if (msgEl) msgEl.textContent = 'Debes iniciar sesión para publicar contenido.';
-      if (modal) modal.classList.add('active');
-    });
-  });
-</script>
-
 <style>
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
+  .hero {
+    position: relative;
     overflow: hidden;
-    clip: rect(0,0,0,0);
-    border: 0;
+    background: radial-gradient(circle at 15% 20%, rgba(255, 183, 107, 0.24), transparent 23%),
+      radial-gradient(circle at 85% 10%, rgba(255, 105, 54, 0.15), transparent 22%),
+      linear-gradient(180deg, #fff7ef 0%, #fff1df 100%);
+    padding: 5rem 0 4rem;
   }
 
-  .hero {
-    background-color: var(--color-navy);
-    color: var(--color-white);
-    padding: 6rem 0 5rem;
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle at 35% 40%, rgba(255, 255, 255, 0.55), transparent 35%),
+      radial-gradient(circle at 75% 75%, rgba(255, 232, 214, 0.35), transparent 20%);
+    opacity: 0.85;
   }
 
   .hero-inner {
-    display: flex;
-    flex-direction: column;
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+    gap: 2rem;
     align-items: center;
-    text-align: center;
-    gap: 1.75rem;
+  }
+
+  .hero-shapes {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero-shapes .shape {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(14px);
+    opacity: 0.75;
+  }
+
+  .hero-shapes .shape-glow {
+    top: 10%;
+    left: 5%;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(255, 186, 119, 0.45), transparent 55%);
+  }
+
+  .hero-shapes .shape-ring {
+    bottom: 12%;
+    right: 8%;
+    width: 220px;
+    height: 220px;
+    border: 2px solid rgba(255, 132, 63, 0.22);
+    background: transparent;
+    filter: blur(0);
+    opacity: 0.45;
+  }
+
+  .hero-shapes .shape-dot {
+    top: 40%;
+    right: 22%;
+    width: 90px;
+    height: 90px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+  }
+
+  .hero-copy {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
   }
 
   .hero-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.45rem 1rem;
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 100px;
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.85);
-    background: rgba(255,255,255,0.06);
-  }
-
-  .hero-title {
-    font-family: var(--font-serif);
-    font-size: clamp(2.5rem, 6vw, 4rem);
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    background: #fff2dc;
+    color: #d86a22;
     font-weight: 700;
-    line-height: 1.1;
-    color: var(--color-white);
+    letter-spacing: 0.01em;
+    margin-bottom: 1.2rem;
+    font-size: 0.9rem;
   }
 
-  .hero-title-highlight {
-    color: var(--color-gold-light);
-    font-style: normal;
+  .hero-copy h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(3rem, 5vw, 4.5rem);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: #2b2b2b;
+    margin-bottom: 1rem;
   }
 
-  .hero-desc {
-    font-size: clamp(1rem, 2vw, 1.125rem);
-    color: rgba(255,255,255,0.7);
-    max-width: 580px;
-    line-height: 1.65;
+  .hero-copy h1 span {
+    color: #f15d25;
   }
 
-  .hero-search {
-    display: flex;
-    align-items: center;
-    background: rgba(255,255,255,0.95);
-    border-radius: var(--radius-md);
-    width: 100%;
-    max-width: 560px;
-    overflow: hidden;
-    gap: 0;
-  }
-
-  .hero-search-icon {
-    flex-shrink: 0;
-    margin-left: 1rem;
-    color: var(--color-text-muted);
-  }
-
-  .hero-search-input {
-    flex: 1;
-    border: none;
-    outline: none;
-    padding: 0.85rem 0.75rem;
-    font-size: 0.95rem;
-    background: transparent;
-    color: var(--color-text);
-    font-family: var(--font-sans);
-  }
-
-  .hero-search-input::placeholder {
-    color: var(--color-text-muted);
-  }
-
-  .hero-search-btn {
-    flex-shrink: 0;
-    background: var(--color-gold);
-    color: var(--color-white);
-    padding: 0.85rem 1.5rem;
-    font-size: 0.95rem;
-    font-weight: 600;
-    transition: background 0.2s;
-    cursor: pointer;
-    border: none;
-    font-family: var(--font-sans);
-  }
-
-  .hero-search-btn:hover {
-    background: var(--color-gold-light);
+  .hero-copy p {
+    max-width: 540px;
+    color: #5a5147;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    margin-bottom: 2rem;
   }
 
   .hero-actions {
     display: flex;
-    gap: 1rem;
     flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
+    min-height: 48px;
+    padding: 0 1.75rem;
+    border-radius: 999px;
+    font-weight: 700;
+    transition: transform 0.2s, box-shadow 0.2s;
   }
 
-  .btn-gold {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background: var(--color-gold);
-    color: var(--color-white);
-    border-radius: var(--radius-sm);
-    font-size: 0.95rem;
-    font-weight: 600;
-    transition: background 0.2s;
+  .btn-primary {
+    background: #ff6b3f;
+    color: #fff;
+    box-shadow: 0 18px 40px rgba(255, 107, 63, 0.2);
   }
 
-  .btn-gold:hover {
-    background: var(--color-gold-light);
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.8);
+    color: #4d3a2a;
+    border: 1px solid rgba(77, 58, 42, 0.12);
   }
 
-  .btn-ghost {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    border: 1.5px solid rgba(255,255,255,0.3);
-    color: var(--color-white);
-    border-radius: var(--radius-sm);
-    font-size: 0.95rem;
-    font-weight: 500;
-    transition: border-color 0.2s, background 0.2s;
-  }
-
-  .btn-ghost:hover {
-    border-color: rgba(255,255,255,0.6);
-    background: rgba(255,255,255,0.08);
+  .btn:hover {
+    transform: translateY(-1px);
   }
 
   .hero-stats {
-    display: flex;
-    gap: 2.5rem;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 0.5rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
   }
 
-  .hero-stat {
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid rgba(119, 84, 41, 0.12);
+    border-radius: var(--radius-lg);
+    padding: 1.2rem 1.25rem;
+    text-align: left;
+    box-shadow: 0 8px 24px rgba(198, 132, 79, 0.08);
+  }
+
+  .stat-card strong {
+    display: block;
+    font-size: 1.35rem;
+    color: #2b2b2b;
+    margin-bottom: 0.35rem;
+  }
+
+  .stat-card span {
+    font-size: 0.95rem;
+    color: #7f6b58;
+  }
+
+  .hero-visual {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .hero-card {
+    width: 100%;
+    max-width: 420px;
+    background: radial-gradient(135deg, #fff8f2 0%, #ffeade 100%);
+    border-radius: 2rem;
+    box-shadow: 0 32px 80px rgba(58, 31, 5, 0.14);
+    overflow: hidden;
+    border: 1px solid rgba(255, 152, 94, 0.2);
+    position: relative;
+  }
+
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    inset: -20px -18px 40px;
+    background: radial-gradient(circle, rgba(255, 186, 119, 0.18), transparent 35%);
+    pointer-events: none;
+  }
+
+  .hero-card-header {
+    padding: 1.3rem 1.4rem 0;
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    color: rgba(255,255,255,0.7);
+    justify-content: space-between;
+    gap: 1rem;
   }
 
-  .hero-stat div {
+  .hero-card-badge {
+    color: #9e3e00;
+    background: #fff2e4;
+    padding: 0.55rem 0.85rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .hero-card-label {
+    font-size: 0.9rem;
+    color: #5a4633;
+    opacity: 0.9;
+  }
+
+  .hero-card-illustration {
+    position: relative;
+    padding: 1.75rem 1.8rem 0;
+  }
+
+  .book-illustration {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 1.75rem;
+    background: linear-gradient(135deg, #ffe8d1 0%, #ffc38b 100%);
+    display: grid;
+    place-items: center;
+    font-size: 5rem;
+    color: #f15d25;
+  }
+
+  .hero-card-body {
+    padding: 1.25rem 1.4rem;
+  }
+
+  .hero-card-title {
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    margin-bottom: 0.65rem;
+    color: #2d2d2d;
+  }
+
+  .hero-card-copy {
+    color: #6b5b4f;
+    line-height: 1.75;
+    font-size: 0.98rem;
+  }
+
+  .hero-card-footer {
+    padding: 1rem 1.4rem 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 1px solid rgba(236, 186, 144, 0.3);
+  }
+
+  .hero-card-footer div {
     display: flex;
     flex-direction: column;
-    line-height: 1.2;
-    text-align: left;
+    gap: 0.15rem;
   }
 
-  .hero-stat strong {
+  .hero-card-footer strong {
     font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--color-white);
+    color: #2d2d2d;
   }
 
-  .hero-stat span {
+  .hero-card-footer span {
+    font-size: 0.9rem;
+    color: #8d7a67;
+  }
+
+  .hero-card-pill {
+    padding: 0.55rem 0.85rem;
+    border-radius: 999px;
+    background: rgba(255, 132, 63, 0.12);
+    color: #d05a2a;
     font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  @media (max-width: 1024px) {
+    .hero-inner {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-visual {
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      padding: 3rem 0 2rem;
+    }
+
+    .hero-copy h1 {
+      font-size: 2.6rem;
+    }
+
+    .hero-stats {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 480px) {

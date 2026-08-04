@@ -7,9 +7,9 @@ const router = Router();
 // Recursos permitidos y la tabla/vista a la que mapean
 const RESOURCE_MAP = {
   libros: {
-    listTable: 'libros',
+    listTable: 'libros_completos',
     writeTable: 'libros',
-    searchFields: ['titulo', 'slug', 'descripcion'],
+    searchFields: ['titulo', 'slug', 'descripcion', 'autor_nombre'],
   },
   usuarios: {
     listTable: 'usuarios',
@@ -27,9 +27,9 @@ const RESOURCE_MAP = {
     searchFields: ['titulo', 'slug', 'categoria'],
   },
   autores: {
-    listTable: 'autores',
+    listTable: 'autores_completos',
     writeTable: 'autores',
-    searchFields: ['bio', 'bio_corta', 'especialidad'],
+    searchFields: ['nombre_completo', 'bio', 'bio_corta', 'especialidad'],
   },
 };
 

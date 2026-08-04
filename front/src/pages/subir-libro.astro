@@ -143,6 +143,11 @@ import Header from '../components/Header.astro';
     let selectedFile = null;
     let selectedCover = null;
     let convertedUploadFile = null;
+    const MAX_BOOK_UPLOAD_SIZE = 80 * 1024 * 1024;
+
+    function isUploadFileSizeValid(file) {
+      return file.size <= MAX_BOOK_UPLOAD_SIZE;
+    }
 
     function showAuthRequiredModal() {
       const modal = document.getElementById('loginModalOverlay');
@@ -429,7 +434,14 @@ import Header from '../components/Header.astro';
 
     async function handleFileSelect(file) {
       if (!isPdfFile(file) && !isDocxFile(file) && !isDocFile(file)) {
+        fileInput.value = '';
         showError('⚠️ Por favor sube un archivo PDF, DOCX o DOC.');
+        return;
+      }
+
+      if (!isUploadFileSizeValid(file)) {
+        fileInput.value = '';
+        showError(`⚠️ El archivo no puede superar ${Math.round(MAX_BOOK_UPLOAD_SIZE / 1024 / 1024)} MB.`);
         return;
       }
 
